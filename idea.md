@@ -1,0 +1,6 @@
+- Not getting a star
+- Allegory for academic pressure
+- Social test genre
+- Monochrome, drawn, simplistic
+- Quiet classroom, scratching of pencils
+- Stationary character 360 view
