@@ -4,3 +4,6 @@
 - Monochrome, drawn, simplistic
 - Quiet classroom, scratching of pencils
 - Stationary character 360 view
+- Simple 3d shapes
+- Drawn "filter" to make rendering feel cooler
+- Based on AP Calculus questions
