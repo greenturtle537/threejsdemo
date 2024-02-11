@@ -62,19 +62,25 @@ class threejsdemo {
 	posupdate(x=0,y=0,z=0) {
 		posdebug.innerHTML = "x:"+x.toString()+" y:"+y.toString()+" z:"+z.toString();
 	}
-	step() {
+	stepold() {
 		const delta = this.clock.getDelta();
 		this.controls.update( delta );
 	}
+	step(timeElapsed) {
+		const timeElapsedS = timeElapsed * 0.0001;
 	
+		this.controls.update(timeElapsedS);
+		//this.fpsCamera_.update(timeElapsedS);
+	}
+
 	raf() {
 		requestAnimationFrame((t) => {
 			if (this.previousRAF === null) {
 			  this.previousRAF = t;
 			}
 	  
-			//this.step(t - this.previousRAF);
-			this.step();
+			this.step(t - this.previousRAF);
+			//this.stepold(); Deprecated for being too static in implementation
 			this.stats.update();
 			this.cube.rotation.x += 0.01;
 			this.cube.rotation.y += 0.01;
