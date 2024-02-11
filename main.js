@@ -2,11 +2,8 @@ import * as THREE from 'three';
 import WebGL from 'three/addons/capabilities/WebGL.js';
 import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
 import Stats from 'three/addons/libs/stats.module.js';
-//todo cleanup of global vars
-let renderer, clock, stats;
-let geometry, cube, plane;
-let posdebug = document.getElementById("posdebug")
 
+let posdebug = document.getElementById("posdebug")
 
 //Screw builtin FPS controls. We want even more customization
 
@@ -16,7 +13,9 @@ class threejsdemo {
 	}
 	initialize_() {
 		this.init();
-		this.animate();
+		//this.animate();
+		this.previousRAF = null;
+    	this.raf();
 	}
 
 	init() {
@@ -25,36 +24,36 @@ class threejsdemo {
 		this.scene = new THREE.Scene();
 		this.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
 
-		clock = new THREE.Clock();
+		this.clock = new THREE.Clock();
 
-		renderer = new THREE.WebGLRenderer();
-		renderer.setSize( window.innerWidth, window.innerHeight );
-		document.body.appendChild( renderer.domElement );
+		this.renderer = new THREE.WebGLRenderer();
+		this.renderer.setSize( window.innerWidth, window.innerHeight );
+		document.body.appendChild( this.renderer.domElement );
 
-		stats = new Stats();
-		stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+		this.stats = new Stats();
+		this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
 		
-		document.body.appendChild( stats.dom );
+		document.body.appendChild( this.stats.dom );
 
-		this.controls = new FirstPersonControls( this.camera, renderer.domElement );
+		this.controls = new FirstPersonControls( this.camera, this.renderer.domElement );
 		this.controls.movementSpeed = 1;
-		this.controls.domElement = renderer.domElement;
+		this.controls.domElement = this.renderer.domElement;
 		this.controls.autoForward = false;
 		this.controls.dragToLook = false;
 		this.controls.activeLook = false;
 		this.controls.lookAt(0, 0, 0);
 
-		geometry = new THREE.BoxGeometry( 3, 3, 3 );
+		this.geometry = new THREE.BoxGeometry( 3, 3, 3 );
 		const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-		cube = new THREE.Mesh( geometry, material );
-		this.scene.add( cube );
+		this.cube = new THREE.Mesh( this.geometry, material );
+		this.scene.add( this.cube );
 
-		geometry = new THREE.PlaneGeometry( 10, 10 );
+		this.geometry = new THREE.PlaneGeometry( 10, 10 );
 		const material2 = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
-		plane = new THREE.Mesh( geometry, material2 );
-		plane.rotation.x = 90;
-		plane.position.y = 0;
-		this.scene.add( plane );
+		this.plane = new THREE.Mesh( this.geometry, material2 );
+		this.plane.rotation.x = 90;
+		this.plane.position.y = 0;
+		this.scene.add( this.plane );
 
 		this.camera.position.z = 5;
 		this.camera.position.x = 0;
@@ -63,85 +62,32 @@ class threejsdemo {
 	posupdate(x=0,y=0,z=0) {
 		posdebug.innerHTML = "x:"+x.toString()+" y:"+y.toString()+" z:"+z.toString();
 	}
-	animate() {
-		requestAnimationFrame( animate );
-		
-		cube.rotation.x += 0.01;
-		cube.rotation.y += 0.01;
-		renderer.render( this.scene, this.camera );
-	
-		this.render();
-		stats.update();
-		this.posupdate(this.camera.position.x,this.camera.position.y,this.camera.position.z)
-	}
-	render() {
-		const delta = clock.getDelta();
+	step() {
+		const delta = this.clock.getDelta();
 		this.controls.update( delta );
 	}
-}
-
-function init() {
-	posdebug.innerHTML = "x:0 y:0 z:0"
-
-	scene = new THREE.Scene();
-	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
-
-	clock = new THREE.Clock();
-
-	renderer = new THREE.WebGLRenderer();
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	document.body.appendChild( renderer.domElement );
-
-	stats = new Stats();
-	stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
 	
-	document.body.appendChild( stats.dom );
-
-	controls = new FirstPersonControls( camera, renderer.domElement );
-	controls.movementSpeed = 1;
-	controls.domElement = renderer.domElement;
-	controls.autoForward = false;
-	controls.dragToLook = false;
-	controls.activeLook = false;
-	controls.lookAt(0, 0, 0);
-
-	geometry = new THREE.BoxGeometry( 3, 3, 3 );
-	const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-	cube = new THREE.Mesh( geometry, material );
-	scene.add( cube );
-
-	geometry = new THREE.PlaneGeometry( 10, 10 );
-	const material2 = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
-	plane = new THREE.Mesh( geometry, material2 );
-	plane.rotation.x = 90;
-	plane.position.y = 0;
-	scene.add( plane );
-
-	camera.position.z = 5;
-	camera.position.x = 0;
-	camera.position.y = -1;
-}
-
-function posupdate(x=0,y=0,z=0) {
-	posdebug.innerHTML = "x:"+x.toString()+" y:"+y.toString()+" z:"+z.toString();
-}
-
-
-function animate() {
-	requestAnimationFrame( animate );
-	
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
-	renderer.render( _APP.scene, _APP.camera );
-
-	render();
-	stats.update();
-	posupdate(_APP.camera.position.x,_APP.camera.position.y,_APP.camera.position.z)
-}
-
-function render() {
-	const delta = clock.getDelta();
-	_APP.controls.update( delta );
+	raf() {
+		requestAnimationFrame((t) => {
+			if (this.previousRAF === null) {
+			  this.previousRAF = t;
+			}
+	  
+			//this.step(t - this.previousRAF);
+			this.step();
+			this.stats.update();
+			this.cube.rotation.x += 0.01;
+			this.cube.rotation.y += 0.01;
+			this.renderer.render( this.scene, this.camera );
+			this.posupdate(this.camera.position.x,this.camera.position.y,this.camera.position.z)
+			//this.threejs_.autoClear = true;
+			//this.threejs_.render(this.scene_, this.camera_);
+			//this.threejs_.autoClear = false;
+			//this.threejs_.render(this.uiScene_, this.uiCamera_);
+			//this.previousRAF = t;
+			this.raf();
+		  });
+	}
 }
 
 let _APP = null;
@@ -150,8 +96,6 @@ if ( WebGL.isWebGLAvailable() ) {
 	// Initiate function or other initializations here
 	window.addEventListener('DOMContentLoaded', () => {
   		_APP = new threejsdemo();
-		//init();
-		//animate();
 	});
 } else {
 	const warning = WebGL.getWebGLErrorMessage();
