@@ -150,6 +150,8 @@ if ( WebGL.isWebGLAvailable() ) {
 	// Initiate function or other initializations here
 	window.addEventListener('DOMContentLoaded', () => {
   		_APP = new threejsdemo();
+		//init();
+		//animate();
 	});
 } else {
 	const warning = WebGL.getWebGLErrorMessage();
