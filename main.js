@@ -224,15 +224,17 @@ class threejsdemo {
 	initialize_() {
 		this.init();
 		//this.animate();
+		this.fpsCamera = new FirstPersonCamera(this.camera, this.objects);
 		this.previousRAF = null;
     	this.raf();
+		this.onWindowResize();
 	}
 
 	init() {
 		posdebug.innerHTML = "x:0 y:0 z:0"
 
-		this.scene = new THREE.Scene();
-		this.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
+		//this.scene = new THREE.Scene();
+		//this.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
 
 		this.clock = new THREE.Clock();
 
@@ -244,7 +246,21 @@ class threejsdemo {
 		this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
 		
 		document.body.appendChild( this.stats.dom );
-
+		
+		
+		const fov = 60;
+		const aspect = window.innerWidth / window.innerHeight;
+		const near = 1.0;
+		const far = 1000.0;
+		
+		this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+		this.camera.position.set(0, 2, 0);
+		
+		this.scene = new THREE.Scene();
+		
+		this.uiCamera = new THREE.OrthographicCamera(-1, 1, 1 * aspect, -1 * aspect, 1, 1000);
+		this.uiScene = new THREE.Scene();
+		
 		this.controls = new FirstPersonControls( this.camera, this.renderer.domElement );
 		this.controls.movementSpeed = 1;
 		this.controls.domElement = this.renderer.domElement;
@@ -261,23 +277,33 @@ class threejsdemo {
 		this.geometry = new THREE.PlaneGeometry( 10, 10 );
 		const material2 = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
 		this.plane = new THREE.Mesh( this.geometry, material2 );
-		this.plane.rotation.x = 90;
+		this.plane.rotation.x = Math.PI/2;
 		this.plane.position.y = 0;
 		this.scene.add( this.plane );
 
-		const meshes = [this.plane];
+		const meshes = [this.plane, this.cube];
 	
-		/*this.objects_ = [];
-	
+		this.objects = [];
+		
 		for (let i = 0; i < meshes.length; ++i) {
 			const b = new THREE.Box3();
 			b.setFromObject(meshes[i]);
-			this.objects_.push(b);
-		}*/
-
-		this.camera.position.z = 5;
-		this.camera.position.x = 0;
-		this.camera.position.y = -1;
+			this.objects.push(b);
+		}
+		
+		//this.camera.position.z = 5;
+		//this.camera.position.x = 0;
+		//this.camera.position.y = -1;
+	}
+	onWindowResize() {
+		this.camera.aspect = window.innerWidth / window.innerHeight;
+		this.camera.updateProjectionMatrix();
+	
+		this.uiCamera.left = -this.camera.aspect;
+		this.uiCamera.right = this.camera.aspect;
+		this.uiCamera.updateProjectionMatrix();
+	
+		this.renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 	posupdate(x=0,y=0,z=0) {
 		posdebug.innerHTML = "x:"+x.toString()+" y:"+y.toString()+" z:"+z.toString();
@@ -287,10 +313,10 @@ class threejsdemo {
 		this.controls.update( delta );
 	}
 	step(timeElapsed) {
-		const timeElapsedS = timeElapsed * 0.0001;
+		const timeElapsedS = timeElapsed * 0.001;
 	
-		this.controls.update(timeElapsedS);
-		//this.fpsCamera_.update(timeElapsedS);
+		//this.controls.update(timeElapsedS);
+		this.fpsCamera.update(timeElapsedS);
 	}
 
 	raf() {
@@ -299,18 +325,18 @@ class threejsdemo {
 			  this.previousRAF = t;
 			}
 	  
-			//this.step(t - this.previousRAF);
-			this.stepold(); //Deprecated for being too static in implementation
+			this.step(t - this.previousRAF);
+			//this.stepold(); //Deprecated for being too static in implementation
 			this.stats.update();
 			this.cube.rotation.x += 0.01;
 			this.cube.rotation.y += 0.01;
-			this.renderer.render( this.scene, this.camera );
+			//this.renderer.render( this.scene, this.camera );
 			this.posupdate(this.camera.position.x,this.camera.position.y,this.camera.position.z)
-			//this.threejs_.autoClear = true;
-			//this.threejs_.render(this.scene_, this.camera_);
-			//this.threejs_.autoClear = false;
-			//this.threejs_.render(this.uiScene_, this.uiCamera_);
-			//this.previousRAF = t;
+			this.renderer.autoClear = true;
+			this.renderer.render(this.scene, this.camera);
+			this.renderer.autoClear = false;
+			this.renderer.render(this.uiScene, this.uiCamera);
+			this.previousRAF = t;
 			this.raf();
 		  });
 	}
