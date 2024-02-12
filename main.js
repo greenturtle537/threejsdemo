@@ -8,6 +8,7 @@ import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 
+let debug = false;
 
 
 let posdebug = document.getElementById("posdebug")
@@ -242,8 +243,10 @@ class threejsdemo {
 	}
 
 	init() {
-		posdebug.innerHTML = "x:0 y:0 z:0"
-
+		if (debug) {
+			posdebug.innerHTML = "x:0 y:0 z:0"
+		}
+		
 		this.clock = new THREE.Clock();
 
 		this.renderer = new THREE.WebGLRenderer();
@@ -363,7 +366,9 @@ class threejsdemo {
 			this.stats.update();
 			this.cube.rotation.x += 0.01;
 			this.cube.rotation.y += 0.01;
-			this.posupdate(this.camera.position.x,this.camera.position.y,this.camera.position.z)
+			if (debug) {
+				this.posupdate(this.camera.position.x,this.camera.position.y,this.camera.position.z)
+			}
 			//this.renderer.autoClear = true;
 			//this.renderer.render(this.scene, this.camera); //Superceded by post processing tool
 			this.composer.render();
