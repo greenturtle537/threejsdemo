@@ -1,7 +1,14 @@
 import * as THREE from 'three';
 import WebGL from 'three/addons/capabilities/WebGL.js';
-import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
 import Stats from 'three/addons/libs/stats.module.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
+
+
 
 let posdebug = document.getElementById("posdebug")
 
@@ -226,6 +233,8 @@ class threejsdemo {
 	}
 	initialize_() {
 		this.init();
+		this.post();
+		this.preload();
 		this.fpsCamera = new FirstPersonCamera(this.camera, this.objects);
 		this.previousRAF = null;
     	this.raf();
@@ -258,21 +267,32 @@ class threejsdemo {
 		this.scene = new THREE.Scene();
 		
 		this.uiCamera = new THREE.OrthographicCamera(-1, 1, 1 * aspect, -1 * aspect, 1, 1000);
-		this.uiScene = new THREE.Scene();
-
-		this.geometry = new THREE.BoxGeometry( 3, 3, 3 );
+		this.uiScene = new THREE.Scene();	
+	}
+	preload() {
+		this.geometry = new THREE.BoxGeometry( 1, 1, 1 );
 		const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
 		this.cube = new THREE.Mesh( this.geometry, material );
-		this.scene.add( this.cube );
+		this.cube.position.y = 1
+		this.cube.position.z = -3
 
-		this.geometry = new THREE.PlaneGeometry( 10, 10 );
-		const material2 = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
-		this.plane = new THREE.Mesh( this.geometry, material2 );
-		this.plane.rotation.x = Math.PI/2;
-		this.plane.position.y = 0;
-		this.scene.add( this.plane );
 
-		const meshes = [this.plane, this.cube];
+		this.planes = [];
+		//Area 1
+		{
+			
+			const geometry = new THREE.PlaneGeometry( 10, 30 );
+			const material = new THREE.MeshBasicMaterial( {color: 0xff00ff, side: THREE.DoubleSide} );
+			
+			this.planes.push(new THREE.Mesh( geometry, material ));
+			this.planes[0].rotation.x = Math.PI/2;
+			this.planes[0].position.z = -10;
+
+		}
+
+
+		const singlemeshes = [this.cube];
+		const meshes = singlemeshes.concat(this.planes)
 	
 		this.objects = [];
 		
@@ -280,10 +300,32 @@ class threejsdemo {
 			const b = new THREE.Box3();
 			b.setFromObject(meshes[i]);
 			this.objects.push(b);
+			this.scene.add(meshes[i]);
+			
 		}
-		
+		this.outlinePass.selectedObjects = [this.cube];
 	}
-	onWindowResize() {
+	post() {
+		this.composer = new EffectComposer( this.renderer );
+		
+		this.renderPass = new RenderPass( this.scene, this.camera );
+		this.composer.addPass( this.renderPass );
+		
+		this.outlinePass = new OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), this.scene, this.camera );
+		this.composer.addPass( this.outlinePass );
+		/*
+		this.outlinePass.visibleEdgeColor = '#ffffff';
+		this.outlinePass.hiddenEdgeColor = '#190a05';
+
+		this.outputPass = new OutputPass();
+		this.composer.addPass( this.outputPass );
+
+		this.effectFXAA = new ShaderPass( FXAAShader );
+		this.effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+		this.composer.addPass( this.effectFXAA );
+		*/
+	}
+ 	onWindowResize() {
 		this.camera.aspect = window.innerWidth / window.innerHeight;
 		this.camera.updateProjectionMatrix();
 	
@@ -292,6 +334,10 @@ class threejsdemo {
 		this.uiCamera.updateProjectionMatrix();
 	
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
+		//this.composer.setSize(window.innerWidth, window.innerHeight);
+
+		//this.effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+
 	}
 	posupdate(x=0,y=0,z=0) {
 		posdebug.innerHTML = "x:"+x.toString()+" y:"+y.toString()+" z:"+z.toString();
@@ -318,10 +364,11 @@ class threejsdemo {
 			this.cube.rotation.x += 0.01;
 			this.cube.rotation.y += 0.01;
 			this.posupdate(this.camera.position.x,this.camera.position.y,this.camera.position.z)
-			this.renderer.autoClear = true;
-			this.renderer.render(this.scene, this.camera);
-			this.renderer.autoClear = false;
-			this.renderer.render(this.uiScene, this.uiCamera);
+			//this.renderer.autoClear = true;
+			//this.renderer.render(this.scene, this.camera); //Superceded by post processing tool
+			this.composer.render();
+			//this.renderer.autoClear = false;
+			//this.renderer.render(this.uiScene, this.uiCamera); //Ignore 2d camera tool for now
 			this.previousRAF = t;
 			this.raf();
 		  });
