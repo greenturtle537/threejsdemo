@@ -123,6 +123,9 @@ class FirstPersonCamera {
     this.headBobActive_ = false;
     this.headBobTimer_ = 0;
     this.objects_ = objects;
+	this.forwardSpeed_ = 2;
+	this.strafeSpeed_ = 2;
+	this.bobIntensity_ = 0.1
   }
 
   update(timeElapsedS) {
@@ -136,7 +139,7 @@ class FirstPersonCamera {
   updateCamera_(_) {
     this.camera_.quaternion.copy(this.rotation_);
     this.camera_.position.copy(this.translation_);
-    this.camera_.position.y += Math.sin(this.headBobTimer_ * 10) * 1.5;
+    this.camera_.position.y += Math.sin(this.headBobTimer_ * 10) * this.bobIntensity_;
 
     const forward = new THREE.Vector3(0, 0, -1);
     forward.applyQuaternion(this.rotation_);
@@ -182,11 +185,11 @@ class FirstPersonCamera {
 
     const forward = new THREE.Vector3(0, 0, -1);
     forward.applyQuaternion(qx);
-    forward.multiplyScalar(forwardVelocity * timeElapsedS * 10);
+    forward.multiplyScalar(forwardVelocity * timeElapsedS * this.forwardSpeed_);
 
     const left = new THREE.Vector3(-1, 0, 0);
     left.applyQuaternion(qx);
-    left.multiplyScalar(strafeVelocity * timeElapsedS * 10);
+    left.multiplyScalar(strafeVelocity * timeElapsedS * this.strafeSpeed_);
 
     this.translation_.add(forward);
     this.translation_.add(left);
@@ -223,7 +226,6 @@ class threejsdemo {
 	}
 	initialize_() {
 		this.init();
-		//this.animate();
 		this.fpsCamera = new FirstPersonCamera(this.camera, this.objects);
 		this.previousRAF = null;
     	this.raf();
@@ -232,9 +234,6 @@ class threejsdemo {
 
 	init() {
 		posdebug.innerHTML = "x:0 y:0 z:0"
-
-		//this.scene = new THREE.Scene();
-		//this.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
 
 		this.clock = new THREE.Clock();
 
@@ -260,14 +259,6 @@ class threejsdemo {
 		
 		this.uiCamera = new THREE.OrthographicCamera(-1, 1, 1 * aspect, -1 * aspect, 1, 1000);
 		this.uiScene = new THREE.Scene();
-		
-		this.controls = new FirstPersonControls( this.camera, this.renderer.domElement );
-		this.controls.movementSpeed = 1;
-		this.controls.domElement = this.renderer.domElement;
-		this.controls.autoForward = false;
-		this.controls.dragToLook = false;
-		this.controls.activeLook = false;
-		this.controls.lookAt(0, 0, 0);
 
 		this.geometry = new THREE.BoxGeometry( 3, 3, 3 );
 		const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
@@ -291,9 +282,6 @@ class threejsdemo {
 			this.objects.push(b);
 		}
 		
-		//this.camera.position.z = 5;
-		//this.camera.position.x = 0;
-		//this.camera.position.y = -1;
 	}
 	onWindowResize() {
 		this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -315,7 +303,6 @@ class threejsdemo {
 	step(timeElapsed) {
 		const timeElapsedS = timeElapsed * 0.001;
 	
-		//this.controls.update(timeElapsedS);
 		this.fpsCamera.update(timeElapsedS);
 	}
 
@@ -330,7 +317,6 @@ class threejsdemo {
 			this.stats.update();
 			this.cube.rotation.x += 0.01;
 			this.cube.rotation.y += 0.01;
-			//this.renderer.render( this.scene, this.camera );
 			this.posupdate(this.camera.position.x,this.camera.position.y,this.camera.position.z)
 			this.renderer.autoClear = true;
 			this.renderer.render(this.scene, this.camera);
