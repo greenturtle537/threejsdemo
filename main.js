@@ -281,21 +281,94 @@ class threejsdemo {
 
 
 		this.planes = [];
+		this.lines = [];
+		this.pointsmap = [];
 		//Area 1
 		{
 			
-			const geometry = new THREE.PlaneGeometry( 10, 30 );
-			const material = new THREE.MeshBasicMaterial( {color: 0xff00ff, side: THREE.DoubleSide} );
+			let geometry = new THREE.PlaneGeometry( 10, 30 );
+			let i = 0
+			let material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
 			
 			this.planes.push(new THREE.Mesh( geometry, material ));
-			this.planes[0].rotation.x = Math.PI/2;
-			this.planes[0].position.z = -10;
+			this.planes[i].rotation.x = Math.PI/2;
+			this.planes[i].position.z = -10;
+			i++;
+			this.planes.push(new THREE.Mesh( geometry, material ));
+			this.planes[i].rotation.x = Math.PI/2;
+			this.planes[i].position.z = -10;
+			this.planes[i].position.y = 10;
+			i++;
+			geometry = new THREE.PlaneGeometry( 30, 10 );
+			this.planes.push(new THREE.Mesh( geometry, material ));
+			this.planes[i].rotation.y = Math.PI/2;
+			this.planes[i].position.y = 5;
+			this.planes[i].position.z = -10;
+			this.planes[i].position.x = -5;
+			i++;
+			this.planes.push(new THREE.Mesh( geometry, material ));
+			this.planes[i].rotation.y = Math.PI/2;
+			this.planes[i].position.y = 5;
+			this.planes[i].position.z = -10;
+			this.planes[i].position.x = 5;
+			i++;
+			geometry = new THREE.PlaneGeometry( 10, 10 );
+			this.planes.push(new THREE.Mesh( geometry, material ));
+			this.planes[i].position.z = -25
+			this.planes[i].position.y = 5
+			i++;
+			this.planes.push(new THREE.Mesh( geometry, material ));
+			this.planes[i].position.z = 5
+			this.planes[i].position.y = 5
+			
+			material = new THREE.LineBasicMaterial({ 
+				color: 0x000000,
+				linewidth: 100,
+			});
+			i=0;
+			this.pointsmap.push([]);
+			this.pointsmap[i].push( new THREE.Vector3( -4.99, 0, 4.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( -4.99, 0, -24.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( -4.99, 10, -24.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( -4.99, 10, 4.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( -4.99, 0, 4.99 ) );
+			i++;
+			this.pointsmap.push([]);
+			this.pointsmap[i].push( new THREE.Vector3( 4.99, 0, 4.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( 4.99, 0, -24.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( 4.99, 10, -24.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( 4.99, 10, 4.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( 4.99, 0, 4.99 ) );
+			i++;
+			this.pointsmap.push([]);
+			this.pointsmap[i].push( new THREE.Vector3( -4.99, 9.99, -24.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( -4.99, 0.01, -24.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( 4.99, 0.01, -24.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( 4.99, 9.99, -24.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( -4.99, 9.99, -24.99 ) );
+			i++;
+			this.pointsmap.push([]);
+			this.pointsmap[i].push( new THREE.Vector3( -4.99, 9.99, 4.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( -4.99, 0.01, 4.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( 4.99, 0.01, 4.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( 4.99, 9.99, 4.99 ) );
+			this.pointsmap[i].push( new THREE.Vector3( -4.99, 9.99, 4.99 ) );
 
+			//this.pointsmap.push(this.planePoints(this.planes[2]));
+
+			for (let i = 0; i < this.pointsmap.length; ++i) {
+				geometry = new THREE.BufferGeometry().setFromPoints( this.pointsmap[i] );
+				this.lines.push(new THREE.Line( geometry, material ));
+				
+			}
+
+			
+
+			
 		}
 
-
 		const singlemeshes = [this.cube];
-		const meshes = singlemeshes.concat(this.planes)
+		const meshes = singlemeshes.concat(this.planes).concat(this.lines);
 	
 		this.objects = [];
 		
@@ -306,8 +379,43 @@ class threejsdemo {
 			this.scene.add(meshes[i]);
 			
 		}
-		this.outlinePass.selectedObjects = [this.cube];
+		this.outlinePass.selectedObjects = meshes;
 	}
+
+	planePoints(plane) {
+		// Todo: I can't do math. Hours wasted: 1
+		let points = [];
+		let xoff = 0.01;
+		let yoff = 0.01;
+		let zoff = 0.01;
+		if (plane.position.x > 0) {
+			xoff = -(xoff);
+		} else if (plane.position.x === 0) {
+			xoff = 0.00;
+		}
+		if (plane.position.y > 0) {
+			yoff = -(yoff);
+		} else if (plane.position.y == 0) {
+			yoff = 0.01;
+		}
+		if (plane.position.z > 0) {
+			zoff = -(zoff);
+		} else if (plane.position.z === 0) {
+			zoff = 0.00;
+		}
+		//plane.geometry.parameters.height
+		//plane.position.y
+		// y = plane.position.y +/- (plane.geometry.parameters.height / 2)
+		// x = plane.position.x +/- (plane.geometry.parameters.width / 2)
+		
+		points.push( new THREE.Vector3( -4.99, 9.99, -24.99 ) );
+		points.push( new THREE.Vector3( -4.99, 0.01, -24.99 ) );
+		points.push( new THREE.Vector3( 4.99, 0.01, -24.99 ) );
+		points.push( new THREE.Vector3( 4.99, 9.99, -24.99 ) );
+		points.push( new THREE.Vector3( -4.99, 9.99, -24.99 ) );
+		return points;
+	}
+
 	post() {
 		this.composer = new EffectComposer( this.renderer );
 		
@@ -316,10 +424,13 @@ class threejsdemo {
 		
 		this.outlinePass = new OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), this.scene, this.camera );
 		this.composer.addPass( this.outlinePass );
+		
+		this.outlinePass.visibleEdgeColor.set('#ffffff');
+		this.outlinePass.hiddenEdgeColor.set('#ffffff');
+		this.outlinePass.edgeThickness = Number( 1 );
+		this.outlinePass.edgeGlow = Number( 0.0 );
+		this.outlinePass.edgeStrength = Number( 10.0 );
 		/*
-		this.outlinePass.visibleEdgeColor = '#ffffff';
-		this.outlinePass.hiddenEdgeColor = '#190a05';
-
 		this.outputPass = new OutputPass();
 		this.composer.addPass( this.outputPass );
 
