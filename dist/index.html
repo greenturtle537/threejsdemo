@@ -1,15 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<title>My first three.js app</title>
-		<style>
-			body { margin: 0; }
-		</style>
-		<script type="module" crossorigin src="/assets/index-DVwTrKF2.js"></script>
-		<link rel="stylesheet" crossorigin href="/assets/index-CyLko5Y3.css">
-	</head>
-	<body>
-		<div id="info"><mark id="posdebug"></mark></div>
-	</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>My first three.js app</title>
+    <style>
+      body {
+        margin: 0;
+      }
+    </style>
+    <style>
+      #canvas3 {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+      }
+      #blocker {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      #instructions {
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        text-align: center;
+        font-size: 14px;
+        cursor: pointer;
+      }
+    </style>
+    <script type="module" crossorigin src="/assets/index-BxnfUhM2.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CyLko5Y3.css">
+  </head>
+  <body>
+    <div id="info"><mark id="posdebug"></mark></div>
+  </body>
 </html>

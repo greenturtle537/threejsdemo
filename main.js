@@ -7,11 +7,31 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { OutlinePass } from "three/addons/postprocessing/OutlinePass.js";
 //import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 //import { FXAAShader } from "three/addons/shaders/FXAAShader.js";
-import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
 
 let debug = false;
 
 let posdebug = document.getElementById("posdebug");
+
+let canvas;
+
+document.addEventListener("pointerlockchange", lockChangeAlert, false);
+
+const blocker = document.getElementById("blocker");
+const instructions = document.getElementById("instructions");
+const pause = document.getElementById("pause");
+pause.style.display = "none";
+//Todo: Lock view when in pause mode
+function lockChangeAlert() {
+  if (document.pointerLockElement === canvas) {
+    console.log("The pointer lock status is now locked");
+    pause.style.display = "none";
+    blocker.style.display = "none";
+  } else {
+    console.log("The pointer lock status is now unlocked");
+    blocker.style.display = "block";
+    pause.style.display = "";
+  }
+}
 
 //Screw builtin FPS controls. We want even more customization
 //======================================= Stolen lol ==================================================
@@ -44,6 +64,7 @@ class InputController {
     this.previous_ = null;
     this.keys_ = {};
     this.previousKeys_ = {};
+    this.target_.addEventListener("click", (e) => this.onClick_(e), false);
     this.target_.addEventListener(
       "mousedown",
       (e) => this.onMouseDown_(e),
@@ -59,16 +80,43 @@ class InputController {
     this.target_.addEventListener("keyup", (e) => this.onKeyUp_(e), false);
   }
 
+  onClick_(e) {
+    const promise = canvas.requestPointerLock({
+      unadjustedMovement: true,
+    });
+    instructions.style.display = "none";
+
+    if (!promise) {
+      console.log("disabling mouse acceleration is not supported");
+      return;
+    }
+
+    return promise
+      .then(() => console.log("pointer is locked"))
+      .catch((error) => {
+        if (error.name === "NotSupportedError") {
+          // Some platforms may not support unadjusted movement.
+          // You can request again a regular pointer lock.
+          return canvas.requestPointerLock();
+        }
+      });
+  }
+
   onMouseMove_(e) {
-    this.current_.mouseX = e.pageX - window.innerWidth / 2;
-    this.current_.mouseY = e.pageY - window.innerHeight / 2;
+    // Pre-pointer locking
+    //this.current_.mouseX = e.pageX - window.innerWidth / 2;
+    //this.current_.mouseY = e.pageY - window.innerHeight / 2;
+    this.current_.mouseX = e.screenX;
+    this.current_.mouseY = e.screenY;
 
     if (this.previous_ === null) {
       this.previous_ = { ...this.current_ };
     }
-
-    this.current_.mouseXDelta = this.current_.mouseX - this.previous_.mouseX;
-    this.current_.mouseYDelta = this.current_.mouseY - this.previous_.mouseY;
+    // Pre-pointer locking
+    //this.current_.mouseXDelta = this.current_.mouseX - this.previous_.mouseX;
+    //this.current_.mouseYDelta = this.current_.mouseY - this.previous_.mouseY;
+    this.current_.mouseXDelta = e.movementX;
+    this.current_.mouseYDelta = e.movementY;
   }
 
   onMouseDown_(e) {
@@ -118,6 +166,8 @@ class InputController {
   }
 
   update(_) {
+    //Is this even called?
+    //Doesn't work because we add pointer locking anyway
     if (this.previous_ !== null) {
       this.current_.mouseXDelta = this.current_.mouseX - this.previous_.mouseX;
       this.current_.mouseYDelta = this.current_.mouseY - this.previous_.mouseY;
@@ -266,11 +316,11 @@ class threejsdemo {
       posdebug.innerHTML = "x:0 y:0 z:0";
     }
 
-    this.clock = new THREE.Clock();
-
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
+
+    canvas = document.querySelector("canvas");
 
     this.stats = new Stats();
     this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -480,6 +530,13 @@ class threejsdemo {
     posdebug.innerHTML =
       "x:" + x.toString() + " y:" + y.toString() + " z:" + z.toString();
   }
+  posauto() {
+    this.posupdate(
+      this.camera.position.x,
+      this.camera.position.y,
+      this.camera.position.z,
+    );
+  }
   stepold() {
     const delta = this.clock.getDelta();
     this.controls.update(delta);
@@ -502,11 +559,7 @@ class threejsdemo {
       this.cube.rotation.x += 0.01;
       this.cube.rotation.y += 0.01;
       if (debug) {
-        this.posupdate(
-          this.camera.position.x,
-          this.camera.position.y,
-          this.camera.position.z,
-        );
+        this.posauto();
       }
       //this.renderer.autoClear = true;
       //this.renderer.render(this.scene, this.camera); //Superceded by post processing tool
