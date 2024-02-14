@@ -1,2 +1,9 @@
 ref/
 fpsdemo/
+.upm/
+node_modules/
+package-lock.json
+package.json
+.replit
+replit.nix
+doc1.html
