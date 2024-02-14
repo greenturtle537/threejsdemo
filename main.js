@@ -3,10 +3,11 @@ import WebGL from 'three/addons/capabilities/WebGL.js';
 import Stats from 'three/addons/libs/stats.module.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+//import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
+//import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+//import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
+import { LightProbeGenerator } from 'three/addons/lights/LightProbeGenerator.js';
 
 let debug = false;
 
@@ -21,7 +22,13 @@ const KEYS = {
 	'w': 87,
 	'd': 68,
 };
-  
+
+const API = {
+	directionalLightIntensity: 0.6,
+	envMapIntensity: 1
+};
+
+
 function clamp(x, a, b) {
 	return Math.min(Math.max(x, a), b);
 }
@@ -288,7 +295,8 @@ class threejsdemo {
 			
 			let geometry = new THREE.PlaneGeometry( 10, 30 );
 			let i = 0
-			let material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
+			//let material = new THREE.MeshStandardMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
+			let material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} ); //debug
 			
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].rotation.x = Math.PI/2;
@@ -362,7 +370,14 @@ class threejsdemo {
 				
 			}
 
-			
+			// light
+			this.directionalLight = new THREE.DirectionalLight( 0xffffff, API.directionalLightIntensity );
+			this.directionalLight.position.set( 0, 5, -10 );
+			this.scene.add( this.directionalLight );
+
+			this.helper = new THREE.DirectionalLightHelper( this.directionalLight, 5 );
+			this.scene.add( this.helper );
+
 
 			
 		}
