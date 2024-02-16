@@ -46,9 +46,15 @@ function getVertices(mesh) {
   const size = getSize(bufferGeometry.boundingBox);
   if (positionAttribute !== undefined) {
     for (let i = 0; i < positionAttribute.count; i++) {
-      const vertex = new THREE.Vector3();
-      vertex.fromBufferAttribute( positionAttribute, i % positionAttribute.count );
+      //const vertex = new THREE.Vector3();
+      const vertex = new THREE.Vector3(
+        positionAttribute.getX(i),
+        positionAttribute.getY(i),
+        positionAttribute.getZ(i)
+      );
+      //vertex.fromBufferAttribute( positionAttribute, i % positionAttribute.count );
       mesh.localToWorld(vertex);
+      vertex.multiplyScalar(0.999);
       vertices.push(vertex);
     }
   }
@@ -57,7 +63,7 @@ function getVertices(mesh) {
 
 function getPlaneVertices(mesh) {
   let normVertices = getVertices(mesh);
-  let planeVertices = normVertices[0] + normVertices[1] + normVertices[3] + normVertices[2];
+  let planeVertices = [normVertices[0],normVertices[2],normVertices[3],normVertices[1],normVertices[0]];
   return planeVertices;
 }
 
@@ -372,6 +378,9 @@ class threejsdemo {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
 
+    this.renderer.sortObjects = false;
+
+
     canvas = document.querySelector("canvas");
 
     this.stats = new Stats();
@@ -485,12 +494,13 @@ class threejsdemo {
       
       this.planespointsmap = [];
       for (let i = 5; i < this.planes.length; ++i) {
-          this.planespointsmap.push(getVertices(this.planes[i]));
+          this.planespointsmap.push(getPlaneVertices(this.planes[i]));
       }
-      this.pointsmap = this.pointsmap.concat(this.planespointsmap);
+      //this.pointsmap = this.pointsmap.concat(this.planespointsmap);
+      //this.pointsmap = this.planespointsmap;
       //this.vertices = this.planes[i].vertices;
       genUpdate(JSON.stringify(this.planespointsmap)+ "aaaaa" + JSON.stringify(this.pointsmap[3]));
-			for (let i = 3; i < this.pointsmap.length; ++i) {
+			for (let i = 0; i < this.pointsmap.length; ++i) {
 				geometry = new THREE.BufferGeometry().setFromPoints( this.pointsmap[i] );
 				this.lines.push(new THREE.Line( geometry, material ));
 				
@@ -561,6 +571,7 @@ class threejsdemo {
 
     this.renderPass = new RenderPass(this.scene, this.camera);
     this.composer.addPass(this.renderPass);
+    
 
     this.outlinePass = new OutlinePass(
       new THREE.Vector2(window.innerWidth, window.innerHeight),
