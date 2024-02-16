@@ -493,40 +493,6 @@ class threejsdemo {
     this.outlinePass.selectedObjects = meshes;
   }
 
-  planePoints(plane) {
-    // Todo: I can't do math. Hours wasted: 1
-    let points = [];
-    let xoff = 0.01;
-    let yoff = 0.01;
-    let zoff = 0.01;
-    if (plane.position.x > 0) {
-      xoff = -xoff;
-    } else if (plane.position.x === 0) {
-      xoff = 0.0;
-    }
-    if (plane.position.y > 0) {
-      yoff = -yoff;
-    } else if (plane.position.y == 0) {
-      yoff = 0.01;
-    }
-    if (plane.position.z > 0) {
-      zoff = -zoff;
-    } else if (plane.position.z === 0) {
-      zoff = 0.0;
-    }
-    //plane.geometry.parameters.height
-    //plane.position.y
-    // y = plane.position.y +/- (plane.geometry.parameters.height / 2)
-    // x = plane.position.x +/- (plane.geometry.parameters.width / 2)
-
-    points.push(new THREE.Vector3(-4.99, 9.99, -24.99));
-    points.push(new THREE.Vector3(-4.99, 0.01, -24.99));
-    points.push(new THREE.Vector3(4.99, 0.01, -24.99));
-    points.push(new THREE.Vector3(4.99, 9.99, -24.99));
-    points.push(new THREE.Vector3(-4.99, 9.99, -24.99));
-    return points;
-  }
-
   post() {
     this.composer = new EffectComposer(this.renderer);
 
