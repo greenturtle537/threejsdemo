@@ -45,7 +45,7 @@ function getVertices(mesh) {
   const positionAttribute = bufferGeometry.getAttribute('position');
   const size = getSize(bufferGeometry.boundingBox);
   if (positionAttribute !== undefined) {
-    for (let i = 0; i < positionAttribute.count+2; i++) {
+    for (let i = 0; i < positionAttribute.count; i++) {
       const vertex = new THREE.Vector3();
       vertex.fromBufferAttribute( positionAttribute, i % positionAttribute.count );
       mesh.localToWorld(vertex);
@@ -53,6 +53,12 @@ function getVertices(mesh) {
     }
   }
   return vertices;
+}
+
+function getPlaneVertices(mesh) {
+  let normVertices = getVertices(mesh);
+  let planeVertices = normVertices[0] + normVertices[1] + normVertices[3] + normVertices[2];
+  return planeVertices;
 }
 
 function lockChangeAlert() {
