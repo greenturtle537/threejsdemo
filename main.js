@@ -399,7 +399,7 @@ class threejsdemo {
   }
   preload() {
     this.geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
     this.cube = new THREE.Mesh(this.geometry, material);
     this.cube.position.y = 1;
     this.cube.position.z = -3;
@@ -412,8 +412,12 @@ class threejsdemo {
 			
 			let geometry = new THREE.PlaneGeometry( 10, 30 );
 			let i = 0
-			//let material = new THREE.MeshStandardMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
-			let material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} ); //debug
+			let material = new THREE.MeshPhongMaterial( {
+        color: 0xffffff, 
+        shininess: 30,
+        side: THREE.DoubleSide
+      } );
+			//let material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} ); //debug
 			
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].rotation.x = Math.PI/2;
@@ -461,11 +465,15 @@ class threejsdemo {
 			}
 
 			// light
-			this.directionalLight = new THREE.DirectionalLight( 0xffffff, API.directionalLightIntensity );
-			this.directionalLight.position.set( 0, 5, -10 );
-			this.scene.add( this.directionalLight );
+			const color = 0xFFFFFF;
+      const intensity = 100;
+      const distance = 0;
+      const angle = (4*Math.pi)/3;
+      this.light = new THREE.SpotLight(color, intensity, distance, angle);
+      this.light.position.set(0, 5, -5);
+      this.scene.add(this.light);
 
-			this.helper = new THREE.DirectionalLightHelper( this.directionalLight, 5 );
+			this.helper = new THREE.SpotLightHelper( this.light, 2, "black" );
 			this.scene.add( this.helper );
 			
 		}
