@@ -9,9 +9,10 @@ import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
 //import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 import { LightProbeGenerator } from 'three/addons/lights/LightProbeGenerator.js';
 
-let debug = false;
+let debug = true;
 
 let posdebug = document.getElementById("posdebug");
+let gendebug = document.getElementById("gendebug");
 
 let canvas;
 
@@ -22,13 +23,47 @@ const instructions = document.getElementById("instructions");
 const pause = document.getElementById("pause");
 pause.style.display = "none";
 //Todo: Lock view when in pause mode
+let lock = false;
+
+function genUpdate(str = "Debug Mode") {
+  gendebug.innerHTML = str;
+}
+
+function getSize(boundingBox) {
+  let min = boundingBox["min"];
+  let max = boundingBox["max"];
+
+  let difference = max.clone().sub(min);
+  return difference;
+}
+
+function getVertices(mesh) {
+  let vertices = [];
+  let bufferGeometry = mesh.geometry;
+  bufferGeometry.computeBoundingBox();
+  bufferGeometry.computeVertexNormals();
+  const positionAttribute = bufferGeometry.getAttribute('position');
+  const size = getSize(bufferGeometry.boundingBox);
+  if (positionAttribute !== undefined) {
+    for (let i = 0; i < positionAttribute.count+2; i++) {
+      const vertex = new THREE.Vector3();
+      vertex.fromBufferAttribute( positionAttribute, i % positionAttribute.count );
+      mesh.localToWorld(vertex);
+      vertices.push(vertex);
+    }
+  }
+  return vertices;
+}
+
 function lockChangeAlert() {
   if (document.pointerLockElement === canvas) {
     console.log("The pointer lock status is now locked");
+	lock = true;
     pause.style.display = "none";
     blocker.style.display = "none";
   } else {
     console.log("The pointer lock status is now unlocked");
+	lock = false;
     blocker.style.display = "block";
     pause.style.display = "";
   }
@@ -202,6 +237,9 @@ class FirstPersonCamera {
   }
 
   update(timeElapsedS) {
+	if (!(lock)) {
+		return;
+	}
     this.updateRotation_(timeElapsedS);
     this.updateCamera_(timeElapsedS);
     this.updateTranslation_(timeElapsedS);
@@ -321,6 +359,7 @@ class threejsdemo {
   init() {
     if (debug) {
       posdebug.innerHTML = "x:0 y:0 z:0";
+      //gendebug.innerHTML = "Debug Mode";
     }
 
     this.renderer = new THREE.WebGLRenderer();
@@ -370,7 +409,7 @@ class threejsdemo {
 			let geometry = new THREE.PlaneGeometry( 10, 30 );
 			let i = 0
 			//let material = new THREE.MeshStandardMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
-			let material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} ); //debug
+			let material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} ); //debug
 			
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].rotation.x = Math.PI/2;
@@ -437,8 +476,15 @@ class threejsdemo {
 			this.pointsmap[i].push( new THREE.Vector3( -4.99, 9.99, 4.99 ) );
 
       //this.pointsmap.push(this.planePoints(this.planes[2]));
-
-			for (let i = 0; i < this.pointsmap.length; ++i) {
+      
+      this.planespointsmap = [];
+      for (let i = 5; i < this.planes.length; ++i) {
+          this.planespointsmap.push(getVertices(this.planes[i]));
+      }
+      this.pointsmap = this.pointsmap.concat(this.planespointsmap);
+      //this.vertices = this.planes[i].vertices;
+      genUpdate(JSON.stringify(this.planespointsmap)+ "aaaaa" + JSON.stringify(this.pointsmap[3]));
+			for (let i = 3; i < this.pointsmap.length; ++i) {
 				geometry = new THREE.BufferGeometry().setFromPoints( this.pointsmap[i] );
 				this.lines.push(new THREE.Line( geometry, material ));
 				
