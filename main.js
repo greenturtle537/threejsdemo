@@ -29,21 +29,12 @@ function genUpdate(str = "Debug Mode") {
   gendebug.innerHTML = str;
 }
 
-function getSize(boundingBox) {
-  let min = boundingBox["min"];
-  let max = boundingBox["max"];
-
-  let difference = max.clone().sub(min);
-  return difference;
-}
-
 function getVertices(mesh) {
   let vertices = [];
   let bufferGeometry = mesh.geometry;
   bufferGeometry.computeBoundingBox();
   bufferGeometry.computeVertexNormals();
   const positionAttribute = bufferGeometry.getAttribute('position');
-  const size = getSize(bufferGeometry.boundingBox);
   if (positionAttribute !== undefined) {
     for (let i = 0; i < positionAttribute.count; i++) {
       const vertex = new THREE.Vector3(
@@ -454,7 +445,11 @@ class threejsdemo {
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].position.z = 5
 			this.planes[i].position.y = 5
-      
+			
+			material = new THREE.LineBasicMaterial({ 
+				color: 0x000000,
+				linewidth: 100,
+			});      
       this.pointsmap = [];
       for (let i = 0; i < this.planes.length; ++i) {
           this.pointsmap.push(getPlaneVertices(this.planes[i]));
@@ -472,8 +467,6 @@ class threejsdemo {
 
 			this.helper = new THREE.DirectionalLightHelper( this.directionalLight, 5 );
 			this.scene.add( this.helper );
-
-
 			
 		}
 
