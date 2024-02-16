@@ -46,13 +46,11 @@ function getVertices(mesh) {
   const size = getSize(bufferGeometry.boundingBox);
   if (positionAttribute !== undefined) {
     for (let i = 0; i < positionAttribute.count; i++) {
-      //const vertex = new THREE.Vector3();
       const vertex = new THREE.Vector3(
         positionAttribute.getX(i),
         positionAttribute.getY(i),
         positionAttribute.getZ(i)
       );
-      //vertex.fromBufferAttribute( positionAttribute, i % positionAttribute.count );
       mesh.localToWorld(vertex);
       vertex.multiplyScalar(0.999);
       vertices.push(vertex);
