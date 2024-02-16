@@ -456,50 +456,11 @@ class threejsdemo {
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].position.z = 5
 			this.planes[i].position.y = 5
-			
-			material = new THREE.LineBasicMaterial({ 
-				color: 0x000000,
-				linewidth: 100,
-			});
-			i=0;
-			this.pointsmap.push([]);
-			this.pointsmap[i].push( new THREE.Vector3( -4.99, 0, 4.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( -4.99, 0, -24.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( -4.99, 10, -24.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( -4.99, 10, 4.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( -4.99, 0, 4.99 ) );
-			i++;
-			this.pointsmap.push([]);
-			this.pointsmap[i].push( new THREE.Vector3( 4.99, 0, 4.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( 4.99, 0, -24.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( 4.99, 10, -24.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( 4.99, 10, 4.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( 4.99, 0, 4.99 ) );
-			i++;
-			this.pointsmap.push([]);
-			this.pointsmap[i].push( new THREE.Vector3( -4.99, 9.99, -24.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( -4.99, 0.01, -24.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( 4.99, 0.01, -24.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( 4.99, 9.99, -24.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( -4.99, 9.99, -24.99 ) );
-			i++;
-			this.pointsmap.push([]);
-			this.pointsmap[i].push( new THREE.Vector3( -4.99, 9.99, 4.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( -4.99, 0.01, 4.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( 4.99, 0.01, 4.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( 4.99, 9.99, 4.99 ) );
-			this.pointsmap[i].push( new THREE.Vector3( -4.99, 9.99, 4.99 ) );
-
-      //this.pointsmap.push(this.planePoints(this.planes[2]));
       
-      this.planespointsmap = [];
-      for (let i = 5; i < this.planes.length; ++i) {
-          this.planespointsmap.push(getPlaneVertices(this.planes[i]));
+      this.pointsmap = [];
+      for (let i = 0; i < this.planes.length; ++i) {
+          this.pointsmap.push(getPlaneVertices(this.planes[i]));
       }
-      //this.pointsmap = this.pointsmap.concat(this.planespointsmap);
-      //this.pointsmap = this.planespointsmap;
-      //this.vertices = this.planes[i].vertices;
-      genUpdate(JSON.stringify(this.planespointsmap)+ "aaaaa" + JSON.stringify(this.pointsmap[3]));
 			for (let i = 0; i < this.pointsmap.length; ++i) {
 				geometry = new THREE.BufferGeometry().setFromPoints( this.pointsmap[i] );
 				this.lines.push(new THREE.Line( geometry, material ));
