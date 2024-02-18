@@ -10,6 +10,7 @@ import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
 import { LightProbeGenerator } from 'three/addons/lights/LightProbeGenerator.js';
 
 let debug = true;
+let lighting = true;
 
 let posdebug = document.getElementById("posdebug");
 let gendebug = document.getElementById("gendebug");
@@ -399,7 +400,8 @@ class threejsdemo {
   }
   preload() {
     this.geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+    //const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
     this.cube = new THREE.Mesh(this.geometry, material);
     this.cube.position.y = 1;
     this.cube.position.z = -3;
@@ -412,13 +414,17 @@ class threejsdemo {
 			
 			let geometry = new THREE.PlaneGeometry( 10, 30 );
 			let i = 0
-			let material = new THREE.MeshPhongMaterial( {
-        color: 0xffffff, 
-        shininess: 30,
-        side: THREE.DoubleSide
-      } );
-			//let material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} ); //debug
-			
+      let material;
+      if (lighting) {
+        material = new THREE.MeshPhongMaterial( {
+          color: 0xffffff, 
+          shininess: 30,
+          side: THREE.DoubleSide
+        } );
+      } else {
+			  material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} ); //debug
+      }
+
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].rotation.x = Math.PI/2;
 			this.planes[i].position.z = -10;
@@ -465,15 +471,42 @@ class threejsdemo {
 			}
 
 			// light
-			const color = 0xFFFFFF;
-      const intensity = 100;
-      const distance = 0;
-      const angle = (4*Math.pi)/3;
-      this.light = new THREE.SpotLight(color, intensity, distance, angle);
-      this.light.position.set(0, 5, -5);
-      this.scene.add(this.light);
 
-			this.helper = new THREE.SpotLightHelper( this.light, 2, "black" );
+      this.light = new THREE.SpotLight(
+        0xffffff, //color
+        150, //intensity
+        0, //distance
+        Math.PI/6,  //angle
+      );
+      this.light.position.set(0, 9, -10);
+      this.scene.add(this.light);
+      this.scene.add( this.light.target );
+      //this.light.castShadow = true;
+      this.light.target.position.set(0, 0, -10);
+
+      this.light2 = new THREE.SpotLight(
+        0xffffff, //color
+        15, //intensity
+        0, //distance
+        Math.PI/2,  //angle
+      );
+      this.light2.position.set(0, 0, -10);
+      this.scene.add(this.light2);
+      this.scene.add( this.light2.target );
+      this.light2.target.position.set(0, 10, -10);
+      
+
+      
+      //We can't afford light bouncing, so trick the user
+      this.ambientLight = new THREE.AmbientLight()
+      this.ambientLight.color = new THREE.Color(0xffffff)
+      this.ambientLight.intensity = 0.3
+      this.scene.add(this.ambientLight)
+
+      //light helper
+			this.helper = new THREE.SpotLightHelper( this.light, 0xffffff);
+			this.scene.add( this.helper );
+      this.helper = new THREE.SpotLightHelper( this.light2, 0xffff00);
 			this.scene.add( this.helper );
 			
 		}
@@ -563,6 +596,7 @@ class threejsdemo {
       this.step(t - this.previousRAF);
       //this.stepold(); //Deprecated for being too static in implementation
       this.stats.update();
+      this.helper.update();
       this.cube.rotation.x += 0.01;
       this.cube.rotation.y += 0.01;
       if (debug) {
