@@ -489,7 +489,7 @@ class threejsdemo {
           0, //distance
           Math.PI/5,  //angle
           0.1, //penumbra
-          0.5, //decay
+          0, //decay
         );
         this.scene.add(this.flashlight);
         this.scene.add( this.flashlight.target );
@@ -551,6 +551,7 @@ class threejsdemo {
 			*/
       this.flashlightHelper = new THREE.SpotLightHelper( this.flashlight, 0xffffff);
       this.scene.add( this.flashlightHelper );
+      
 		}
 
     // Create a circle geometry and a material
@@ -621,17 +622,20 @@ class threejsdemo {
   updateFlashlight() {
     
     if (lighting) {
-      //let test = InputController.key(KEYS.space);
-      this.flashlight.position.copy(this.camera.position);
-      this.flashlight.target.position.copy(this.camera.position);
-      let direction = new THREE.Vector3();
-      this.camera.getWorldDirection(direction);
-      this.flashlight.target.position.add(direction).add(new THREE.Vector3(0,0,0));
-      //this.flashlight.target.position.add(new THREE.Vector3(0,0,-3))
-      genUpdate(JSON.stringify(direction));
-      this.circle.position.copy(this.camera.position);
-      this.circle.position.add(direction/*.multiplyScalar(5)*/);
-      this.circle.lookAt(this.camera.position);
+      if (this.fpsCamera.input_.key(KEYS.space)) {
+        this.flashlight.position.copy(this.camera.position);
+        this.flashlight.target.position.copy(this.camera.position);
+        let direction = new THREE.Vector3();
+        this.camera.getWorldDirection(direction);
+        this.flashlight.target.position.add(direction).add(new THREE.Vector3(0,0,0));
+        //this.flashlight.target.position.applyQuaternion(this.camera.quaternion);
+        //this.flashlight.target.position.add(new THREE.Vector3(0,0,-3))
+        genUpdate(JSON.stringify(direction));
+        this.circle.position.copy(this.camera.position);
+        this.circle.position.add(direction/*.multiplyScalar(5)*/);
+        this.circle.lookAt(this.camera.position);
+        this.flashlightHelper.update();
+      }
     }
     
   }
@@ -667,7 +671,6 @@ class threejsdemo {
       this.step(t - this.previousRAF);
       //this.stepold(); //Deprecated for being too static in implementation
       this.stats.update();
-      this.flashlightHelper.update();
       this.cube.rotation.x += 0.01;
       this.cube.rotation.y += 0.01;
       if (debug) {
