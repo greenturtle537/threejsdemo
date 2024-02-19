@@ -78,6 +78,13 @@ const KEYS = {
   s: 83,
   w: 87,
   d: 68,
+  space: 32,
+  shift: 16,
+  left: 37,
+  up: 38,
+  right: 39,
+  down: 40,
+  ctrl: 17,
 };
 
 const API = {
@@ -400,11 +407,13 @@ class threejsdemo {
   }
   preload() {
     this.geometry = new THREE.BoxGeometry(1, 1, 1);
-    //const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
-    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    //const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    material.metalness = 0.5;
+    material.roughness = 0.5;
     this.cube = new THREE.Mesh(this.geometry, material);
     this.cube.position.y = 1;
-    this.cube.position.z = -3;
+    this.cube.position.z = -10;
 
 		this.planes = [];
 		this.lines = [];
@@ -416,10 +425,12 @@ class threejsdemo {
 			let i = 0
       let material;
       if (lighting) {
-        material = new THREE.MeshPhongMaterial( {
+        material = new THREE.MeshStandardMaterial( {
           color: 0xffffff, 
           shininess: 30,
-          side: THREE.DoubleSide
+          side: THREE.DoubleSide,
+          metalness: 0.5,
+          roughness: 0.5,
         } );
       } else {
 			  material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} ); //debug
@@ -470,17 +481,38 @@ class threejsdemo {
 				
 			}
 
-			// light
+      //flashlight
+      if (lighting) {
+        this.flashlight = new THREE.SpotLight(
+          0xffffff, //color
+          1, //intensity
+          0, //distance
+          Math.PI/5,  //angle
+          0.1, //penumbra
+          0.5, //decay
+        );
+        this.scene.add(this.flashlight);
+        this.scene.add( this.flashlight.target );
+        //this.flashlight.position.set(this.camera.position.x,this.camera.position.y,this.camera.position.z);
+        this.flashlight.position.set(0, 2, 0);
+        //offset = new THREE.Vector3(0, 5, 0);
+        this.flashlight.target.position.set(0, 3, -10);
+        //this.flashlight.penumbra = 1;
+      }
 
+			// light
+      /*
       this.light = new THREE.SpotLight(
         0xffffff, //color
         150, //intensity
         0, //distance
-        Math.PI/6,  //angle
+        Math.PI/3,  //angle
       );
       this.light.position.set(0, 9, -10);
       this.scene.add(this.light);
       this.scene.add( this.light.target );
+      this.light.penumbra = 1;
+      //this.light.power = 100;
       //this.light.castShadow = true;
       this.light.target.position.set(0, 0, -10);
 
@@ -488,28 +520,48 @@ class threejsdemo {
         0xffffff, //color
         15, //intensity
         0, //distance
-        Math.PI/2,  //angle
+        499*Math.PI/1000,  //angle
       );
       this.light2.position.set(0, 0, -10);
-      this.scene.add(this.light2);
+      this.light2.penumbra = 0;
+      //this.scene.add(this.light2);
       this.scene.add( this.light2.target );
       this.light2.target.position.set(0, 10, -10);
-      
-
-      
+      */
       //We can't afford light bouncing, so trick the user
       this.ambientLight = new THREE.AmbientLight()
       this.ambientLight.color = new THREE.Color(0xffffff)
-      this.ambientLight.intensity = 0.3
+      this.ambientLight.intensity = 0.3;
       this.scene.add(this.ambientLight)
-
+      /*
+      this.light3 = new THREE.PointLight( 0xffffff, 30, 100 );
+      this.light3.position.set( 0, 0, -10 );
+      this.scene.add( this.light3 );
+      */
       //light helper
-			this.helper = new THREE.SpotLightHelper( this.light, 0xffffff);
+			/*
+      this.helper = new THREE.SpotLightHelper( this.light, 0xffffff);
 			this.scene.add( this.helper );
-      this.helper = new THREE.SpotLightHelper( this.light2, 0xffff00);
-			this.scene.add( this.helper );
-			
+      
+      this.helper2 = new THREE.SpotLightHelper( this.light2, 0xffff00);
+			this.scene.add( this.helper2 );
+      
+      this.helper3 = new THREE.PointLightHelper( this.light3, 5);
+			this.scene.add( this.helper3 );
+			*/
+      this.flashlightHelper = new THREE.SpotLightHelper( this.flashlight, 0xffffff);
+      this.scene.add( this.flashlightHelper );
 		}
+
+    // Create a circle geometry and a material
+    this.geometry = new THREE.CircleGeometry(0.1, 32);
+    this.material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+
+    // Create a mesh using the geometry and material
+    this.circle = new THREE.Mesh(this.geometry, this.material);
+
+    // Add the circle to your scene
+    this.scene.add(this.circle);
 
     const singlemeshes = [this.cube];
     const meshes = singlemeshes.concat(this.planes).concat(this.lines);
@@ -566,6 +618,24 @@ class threejsdemo {
 
     //this.effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
   }
+  updateFlashlight() {
+    
+    if (lighting) {
+      //let test = InputController.key(KEYS.space);
+      this.flashlight.position.copy(this.camera.position);
+      this.flashlight.target.position.copy(this.camera.position);
+      let direction = new THREE.Vector3();
+      this.camera.getWorldDirection(direction);
+      this.flashlight.target.position.add(direction).add(new THREE.Vector3(0,0,0));
+      //this.flashlight.target.position.add(new THREE.Vector3(0,0,-3))
+      genUpdate(JSON.stringify(direction));
+      this.circle.position.copy(this.camera.position);
+      this.circle.position.add(direction/*.multiplyScalar(5)*/);
+      this.circle.lookAt(this.camera.position);
+    }
+    
+  }
+
   posupdate(x = 0, y = 0, z = 0) {
     posdebug.innerHTML =
       "x:" + x.toString() + " y:" + y.toString() + " z:" + z.toString();
@@ -585,6 +655,7 @@ class threejsdemo {
     const timeElapsedS = timeElapsed * 0.001;
 
     this.fpsCamera.update(timeElapsedS);
+    this.updateFlashlight();
   }
 
   raf() {
@@ -596,7 +667,7 @@ class threejsdemo {
       this.step(t - this.previousRAF);
       //this.stepold(); //Deprecated for being too static in implementation
       this.stats.update();
-      this.helper.update();
+      this.flashlightHelper.update();
       this.cube.rotation.x += 0.01;
       this.cube.rotation.y += 0.01;
       if (debug) {
