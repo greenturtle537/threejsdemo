@@ -429,8 +429,8 @@ class threejsdemo {
           color: 0xffffff, 
           shininess: 30,
           side: THREE.DoubleSide,
-          metalness: 0.5,
-          roughness: 0.5,
+          //metalness: 0.5,
+          //roughness: 0.5,
         } );
       } else {
 			  material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} ); //debug
@@ -485,11 +485,11 @@ class threejsdemo {
       if (lighting) {
         this.flashlight = new THREE.SpotLight(
           0xffffff, //color
-          1, //intensity
+          0, //intensity
           0, //distance
-          Math.PI/5,  //angle
-          0.1, //penumbra
-          0, //decay
+          Math.PI/12,  //angle
+          1, //penumbra
+          2, //decay
         );
         this.scene.add(this.flashlight);
         this.scene.add( this.flashlight.target );
@@ -501,21 +501,21 @@ class threejsdemo {
       }
 
 			// light
-      /*
+      
       this.light = new THREE.SpotLight(
         0xffffff, //color
         150, //intensity
         0, //distance
-        Math.PI/3,  //angle
+        Math.PI/8,  //angle
       );
       this.light.position.set(0, 9, -10);
       this.scene.add(this.light);
       this.scene.add( this.light.target );
       this.light.penumbra = 1;
       //this.light.power = 100;
-      //this.light.castShadow = true;
+      this.light.castShadow = true;
       this.light.target.position.set(0, 0, -10);
-
+      /*
       this.light2 = new THREE.SpotLight(
         0xffffff, //color
         15, //intensity
@@ -531,7 +531,7 @@ class threejsdemo {
       //We can't afford light bouncing, so trick the user
       this.ambientLight = new THREE.AmbientLight()
       this.ambientLight.color = new THREE.Color(0xffffff)
-      this.ambientLight.intensity = 0.3;
+      this.ambientLight.intensity = 0.1;
       this.scene.add(this.ambientLight)
       /*
       this.light3 = new THREE.PointLight( 0xffffff, 30, 100 );
@@ -549,20 +549,20 @@ class threejsdemo {
       this.helper3 = new THREE.PointLightHelper( this.light3, 5);
 			this.scene.add( this.helper3 );
 			*/
-      this.flashlightHelper = new THREE.SpotLightHelper( this.flashlight, 0xffffff);
-      this.scene.add( this.flashlightHelper );
+      //this.flashlightHelper = new THREE.SpotLightHelper( this.flashlight, 0xffffff);
+      //this.scene.add( this.flashlightHelper );
       
 		}
 
     // Create a circle geometry and a material
-    this.geometry = new THREE.CircleGeometry(0.1, 32);
-    this.material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    //this.geometry = new THREE.CircleGeometry(0.1, 32);
+    //this.material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
 
     // Create a mesh using the geometry and material
-    this.circle = new THREE.Mesh(this.geometry, this.material);
+    //this.circle = new THREE.Mesh(this.geometry, this.material);
 
     // Add the circle to your scene
-    this.scene.add(this.circle);
+    //this.scene.add(this.circle);
 
     const singlemeshes = [this.cube];
     const meshes = singlemeshes.concat(this.planes).concat(this.lines);
@@ -623,6 +623,7 @@ class threejsdemo {
     
     if (lighting) {
       if (this.fpsCamera.input_.key(KEYS.space)) {
+        this.flashlight.intensity = 50;
         this.flashlight.position.copy(this.camera.position);
         this.flashlight.target.position.copy(this.camera.position);
         let direction = new THREE.Vector3();
@@ -630,14 +631,15 @@ class threejsdemo {
         this.flashlight.target.position.add(direction).add(new THREE.Vector3(0,0,0));
         //this.flashlight.target.position.applyQuaternion(this.camera.quaternion);
         //this.flashlight.target.position.add(new THREE.Vector3(0,0,-3))
-        genUpdate(JSON.stringify(direction));
-        this.circle.position.copy(this.camera.position);
-        this.circle.position.add(direction/*.multiplyScalar(5)*/);
-        this.circle.lookAt(this.camera.position);
-        this.flashlightHelper.update();
+        //genUpdate(JSON.stringify(direction));
+        //this.circle.position.copy(this.camera.position);
+        //this.circle.position.add(direction/*.multiplyScalar(5)*/);
+        //this.circle.lookAt(this.camera.position);
+        //this.flashlightHelper.update();
+      } else {
+        this.flashlight.intensity = 0;
       }
     }
-    
   }
 
   posupdate(x = 0, y = 0, z = 0) {
