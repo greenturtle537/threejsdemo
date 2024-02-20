@@ -1,13 +1,13 @@
-import * as THREE from "three";
-import WebGL from "three/addons/capabilities/WebGL.js";
-import Stats from "three/addons/libs/stats.module.js";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import * as THREE from 'three';
+import WebGL from 'three/addons/capabilities/WebGL.js';
+import Stats from 'three/addons/libs/stats.module.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 //import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { OutlinePass } from "three/addons/postprocessing/OutlinePass.js";
+import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
 //import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 //import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
-import { LightProbeGenerator } from "three/addons/lights/LightProbeGenerator.js";
+import { LightProbeGenerator } from 'three/addons/lights/LightProbeGenerator.js';
 
 let debug = false;
 let lighting = true;
@@ -22,6 +22,7 @@ let gendebug = document.getElementById("gendebug");
 /  Average person height is 5'6"
 */
 let camh = 5.5;
+
 
 let canvas;
 
@@ -43,13 +44,13 @@ function getVertices(mesh) {
   let bufferGeometry = mesh.geometry;
   bufferGeometry.computeBoundingBox();
   bufferGeometry.computeVertexNormals();
-  const positionAttribute = bufferGeometry.getAttribute("position");
+  const positionAttribute = bufferGeometry.getAttribute('position');
   if (positionAttribute !== undefined) {
     for (let i = 0; i < positionAttribute.count; i++) {
       const vertex = new THREE.Vector3(
         positionAttribute.getX(i),
         positionAttribute.getY(i),
-        positionAttribute.getZ(i),
+        positionAttribute.getZ(i)
       );
       mesh.localToWorld(vertex);
       vertex.multiplyScalar(0.999);
@@ -61,25 +62,19 @@ function getVertices(mesh) {
 
 function getPlaneVertices(mesh) {
   let normVertices = getVertices(mesh);
-  let planeVertices = [
-    normVertices[0],
-    normVertices[2],
-    normVertices[3],
-    normVertices[1],
-    normVertices[0],
-  ];
+  let planeVertices = [normVertices[0],normVertices[2],normVertices[3],normVertices[1],normVertices[0]];
   return planeVertices;
 }
 
 function lockChangeAlert() {
   if (document.pointerLockElement === canvas) {
     console.log("The pointer lock status is now locked");
-    lock = true;
+  lock = true;
     pause.style.display = "none";
     blocker.style.display = "none";
   } else {
     console.log("The pointer lock status is now unlocked");
-    lock = false;
+  lock = false;
     blocker.style.display = "block";
     pause.style.display = "";
   }
@@ -103,8 +98,9 @@ const KEYS = {
 
 const API = {
   directionalLightIntensity: 0.6,
-  envMapIntensity: 1,
+  envMapIntensity: 1
 };
+
 
 function clamp(x, a, b) {
   return Math.min(Math.max(x, a), b);
@@ -259,9 +255,9 @@ class FirstPersonCamera {
   }
 
   update(timeElapsedS) {
-    if (!lock) {
-      return;
-    }
+  if (!(lock)) {
+    return;
+  }
     this.updateRotation_(timeElapsedS);
     this.updateCamera_(timeElapsedS);
     this.updateTranslation_(timeElapsedS);
@@ -391,6 +387,8 @@ class threejsdemo {
     this.renderer.sortObjects = false;
     this.renderer.shadowMap.enabled = true;
 
+
+
     canvas = document.querySelector("canvas");
 
     this.stats = new Stats();
@@ -435,68 +433,67 @@ class threejsdemo {
     this.pointsmap = [];
     //Area 1
     {
-      let geometry = new THREE.PlaneGeometry(12, 30);
-      let i = 0;
+
+      let geometry = new THREE.PlaneGeometry( 12, 30 );
+      let i = 0
       let material;
       if (lighting) {
-        material = new THREE.MeshStandardMaterial({
-          color: 0xffffff,
+        material = new THREE.MeshStandardMaterial( {
+          color: 0xffffff, 
           //shininess: 30,
           side: THREE.DoubleSide,
           //metalness: 0.5,
           //roughness: 0.5,
-        });
+        } );
       } else {
-        material = new THREE.MeshBasicMaterial({
-          color: 0xffffff,
-          side: THREE.DoubleSide,
-        }); //debug
+        material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} ); //debug
       }
 
-      this.planes.push(new THREE.Mesh(geometry, material));
-      this.planes[i].rotation.x = Math.PI / 2;
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].rotation.x = Math.PI/2;
       this.planes[i].position.z = -10;
       this.planes[i].receiveShadow = true;
       i++;
-      this.planes.push(new THREE.Mesh(geometry, material));
-      this.planes[i].rotation.x = Math.PI / 2;
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].rotation.x = Math.PI/2;
       this.planes[i].position.z = -10;
       this.planes[i].position.y = 9;
       this.planes[i].receiveShadow = true;
       i++;
-      geometry = new THREE.PlaneGeometry(30, 9);
-      this.planes.push(new THREE.Mesh(geometry, material));
-      this.planes[i].rotation.y = Math.PI / 2;
+      geometry = new THREE.PlaneGeometry( 30, 9 );
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].rotation.y = Math.PI/2;
       this.planes[i].position.y = 4.5;
       this.planes[i].position.z = -10;
       this.planes[i].position.x = -6;
       i++;
-      this.planes.push(new THREE.Mesh(geometry, material));
-      this.planes[i].rotation.y = Math.PI / 2;
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].rotation.y = Math.PI/2;
       this.planes[i].position.y = 4.5;
       this.planes[i].position.z = -10;
       this.planes[i].position.x = 6;
       i++;
-      geometry = new THREE.PlaneGeometry(12, 9);
-      this.planes.push(new THREE.Mesh(geometry, material));
-      this.planes[i].position.z = -25;
-      this.planes[i].position.y = 4.5;
+      geometry = new THREE.PlaneGeometry( 12, 9 );
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].position.z = -25
+      this.planes[i].position.y = 4.5
       i++;
-      this.planes.push(new THREE.Mesh(geometry, material));
-      this.planes[i].position.z = 5;
-      this.planes[i].position.y = 4.5;
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].position.z = 5
+      this.planes[i].position.y = 4.5
 
-      material = new THREE.LineBasicMaterial({
+      material = new THREE.LineBasicMaterial({ 
         color: 0x000000,
         linewidth: 100,
-      });
+      });      
       this.pointsmap = [];
       for (let i = 0; i < this.planes.length; ++i) {
-        this.pointsmap.push(getPlaneVertices(this.planes[i]));
+          this.pointsmap.push(getPlaneVertices(this.planes[i]));
       }
       for (let i = 0; i < this.pointsmap.length; ++i) {
-        geometry = new THREE.BufferGeometry().setFromPoints(this.pointsmap[i]);
-        this.lines.push(new THREE.Line(geometry, material));
+        geometry = new THREE.BufferGeometry().setFromPoints( this.pointsmap[i] );
+        this.lines.push(new THREE.Line( geometry, material ));
+
       }
 
       //flashlight
@@ -505,13 +502,13 @@ class threejsdemo {
           0xffffff, //color
           0, //intensity
           0, //distance
-          Math.PI / 6, //angle
+          Math.PI/6,  //angle
           1, //penumbra
           1, //decay
         );
         this.scene.add(this.flashlight);
         this.flashlight.castShadow = true;
-        this.scene.add(this.flashlight.target);
+        this.scene.add( this.flashlight.target );
         //this.flashlight.position.set(this.camera.position.x,this.camera.position.y,this.camera.position.z);
         this.flashlight.position.set(0, 2, 0);
         //offset = new THREE.Vector3(0, 5, 0);
@@ -525,11 +522,11 @@ class threejsdemo {
         0xffffff, //color
         150, //intensity
         0, //distance
-        Math.PI / 5, //angle
+        Math.PI/5,  //angle
       );
       this.light.position.set(0, 9, -10);
       //this.scene.add(this.light);
-      this.scene.add(this.light.target);
+      this.scene.add( this.light.target );
       this.light.penumbra = 1;
       //this.light.power = 100;
       this.light.castShadow = true;
@@ -548,10 +545,10 @@ class threejsdemo {
       this.light2.target.position.set(0, 10, -10);
       */
       //We can't afford light bouncing, so trick the user
-      this.ambientLight = new THREE.AmbientLight();
-      this.ambientLight.color = new THREE.Color(0xffffff);
+      this.ambientLight = new THREE.AmbientLight()
+      this.ambientLight.color = new THREE.Color(0xffffff)
       this.ambientLight.intensity = 0.1;
-      this.scene.add(this.ambientLight);
+      this.scene.add(this.ambientLight)
       /*
       this.light3 = new THREE.PointLight( 0xffffff, 30, 100 );
       this.light3.position.set( 0, 0, -10 );
@@ -570,6 +567,7 @@ class threejsdemo {
       */
       //this.flashlightHelper = new THREE.SpotLightHelper( this.flashlight, 0xffffff);
       //this.scene.add( this.flashlightHelper );
+
     }
 
     // Create a circle geometry and a material
@@ -601,6 +599,7 @@ class threejsdemo {
 
     this.renderPass = new RenderPass(this.scene, this.camera);
     this.composer.addPass(this.renderPass);
+
 
     this.outlinePass = new OutlinePass(
       new THREE.Vector2(window.innerWidth, window.innerHeight),
@@ -637,6 +636,7 @@ class threejsdemo {
     //this.effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
   }
   updateFlashlight() {
+
     if (lighting) {
       if (this.fpsCamera.input_.key(KEYS.space)) {
         this.flashlight.intensity = 10;
@@ -644,9 +644,7 @@ class threejsdemo {
         this.flashlight.target.position.copy(this.camera.position);
         let direction = new THREE.Vector3();
         this.camera.getWorldDirection(direction);
-        this.flashlight.target.position
-          .add(direction)
-          .add(new THREE.Vector3(0, 0, 0));
+        this.flashlight.target.position.add(direction).add(new THREE.Vector3(0,0,0));
         //this.flashlight.target.position.applyQuaternion(this.camera.quaternion);
         //this.flashlight.target.position.add(new THREE.Vector3(0,0,-3))
         //genUpdate(JSON.stringify(direction));
