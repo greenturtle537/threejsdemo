@@ -1,0 +1,722 @@
+import * as THREE from 'three';
+import WebGL from 'three/addons/capabilities/WebGL.js';
+import Stats from 'three/addons/libs/stats.module.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+//import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
+//import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+//import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
+import { LightProbeGenerator } from 'three/addons/lights/LightProbeGenerator.js';
+
+let debug = false;
+let lighting = true;
+
+let posdebug = document.getElementById("posdebug");
+let gendebug = document.getElementById("gendebug");
+
+/* A few notes about sizing, please assume:
+/  1 unit = 1 foot
+/  Average hallways in the US are 9 feet tall
+/  School hallways tend to 6-18 feet wide
+/  Average person height is 5'6"
+*/
+let camh = 5.5;
+
+
+let canvas;
+
+document.addEventListener("pointerlockchange", lockChangeAlert, false);
+
+const blocker = document.getElementById("blocker");
+const instructions = document.getElementById("instructions");
+const pause = document.getElementById("pause");
+pause.style.display = "none";
+//Todo: Lock view when in pause mode
+let lock = false;
+
+function genUpdate(str = "Debug Mode") {
+  gendebug.innerHTML = str;
+}
+
+function getVertices(mesh) {
+  let vertices = [];
+  let bufferGeometry = mesh.geometry;
+  bufferGeometry.computeBoundingBox();
+  bufferGeometry.computeVertexNormals();
+  const positionAttribute = bufferGeometry.getAttribute('position');
+  if (positionAttribute !== undefined) {
+    for (let i = 0; i < positionAttribute.count; i++) {
+      const vertex = new THREE.Vector3(
+        positionAttribute.getX(i),
+        positionAttribute.getY(i),
+        positionAttribute.getZ(i)
+      );
+      mesh.localToWorld(vertex);
+      vertex.multiplyScalar(0.999);
+      vertices.push(vertex);
+    }
+  }
+  return vertices;
+}
+
+function getPlaneVertices(mesh) {
+  let normVertices = getVertices(mesh);
+  let planeVertices = [normVertices[0],normVertices[2],normVertices[3],normVertices[1],normVertices[0]];
+  return planeVertices;
+}
+
+function lockChangeAlert() {
+  if (document.pointerLockElement === canvas) {
+    console.log("The pointer lock status is now locked");
+  lock = true;
+    pause.style.display = "none";
+    blocker.style.display = "none";
+  } else {
+    console.log("The pointer lock status is now unlocked");
+  lock = false;
+    blocker.style.display = "block";
+    pause.style.display = "";
+  }
+}
+
+//Screw builtin FPS controls. We want even more customization
+//======================================= Stolen lol ==================================================
+const KEYS = {
+  a: 65,
+  s: 83,
+  w: 87,
+  d: 68,
+  space: 32,
+  shift: 16,
+  left: 37,
+  up: 38,
+  right: 39,
+  down: 40,
+  ctrl: 17,
+};
+
+const API = {
+  directionalLightIntensity: 0.6,
+  envMapIntensity: 1
+};
+
+
+function clamp(x, a, b) {
+  return Math.min(Math.max(x, a), b);
+}
+
+class InputController {
+  constructor(target) {
+    this.target_ = target || document;
+    this.initialize_();
+  }
+
+  initialize_() {
+    this.current_ = {
+      leftButton: false,
+      rightButton: false,
+      mouseXDelta: 0,
+      mouseYDelta: 0,
+      mouseX: 0,
+      mouseY: 0,
+    };
+    this.previous_ = null;
+    this.keys_ = {};
+    this.previousKeys_ = {};
+    this.target_.addEventListener("click", (e) => this.onClick_(e), false);
+    this.target_.addEventListener(
+      "mousedown",
+      (e) => this.onMouseDown_(e),
+      false,
+    );
+    this.target_.addEventListener(
+      "mousemove",
+      (e) => this.onMouseMove_(e),
+      false,
+    );
+    this.target_.addEventListener("mouseup", (e) => this.onMouseUp_(e), false);
+    this.target_.addEventListener("keydown", (e) => this.onKeyDown_(e), false);
+    this.target_.addEventListener("keyup", (e) => this.onKeyUp_(e), false);
+  }
+
+  onClick_(e) {
+    const promise = canvas.requestPointerLock({
+      unadjustedMovement: true,
+    });
+    instructions.style.display = "none";
+
+    if (!promise) {
+      console.log("disabling mouse acceleration is not supported");
+      return;
+    }
+
+    return promise
+      .then(() => console.log("pointer is locked"))
+      .catch((error) => {
+        if (error.name === "NotSupportedError") {
+          // Some platforms may not support unadjusted movement.
+          // You can request again a regular pointer lock.
+          return canvas.requestPointerLock();
+        }
+      });
+  }
+
+  onMouseMove_(e) {
+    // Pre-pointer locking
+    //this.current_.mouseX = e.pageX - window.innerWidth / 2;
+    //this.current_.mouseY = e.pageY - window.innerHeight / 2;
+    this.current_.mouseX = e.screenX;
+    this.current_.mouseY = e.screenY;
+
+    if (this.previous_ === null) {
+      this.previous_ = { ...this.current_ };
+    }
+    // Pre-pointer locking
+    //this.current_.mouseXDelta = this.current_.mouseX - this.previous_.mouseX;
+    //this.current_.mouseYDelta = this.current_.mouseY - this.previous_.mouseY;
+    this.current_.mouseXDelta = e.movementX;
+    this.current_.mouseYDelta = e.movementY;
+  }
+
+  onMouseDown_(e) {
+    this.onMouseMove_(e);
+
+    switch (e.button) {
+      case 0: {
+        this.current_.leftButton = true;
+        break;
+      }
+      case 2: {
+        this.current_.rightButton = true;
+        break;
+      }
+    }
+  }
+
+  onMouseUp_(e) {
+    this.onMouseMove_(e);
+
+    switch (e.button) {
+      case 0: {
+        this.current_.leftButton = false;
+        break;
+      }
+      case 2: {
+        this.current_.rightButton = false;
+        break;
+      }
+    }
+  }
+
+  onKeyDown_(e) {
+    this.keys_[e.keyCode] = true;
+  }
+
+  onKeyUp_(e) {
+    this.keys_[e.keyCode] = false;
+  }
+
+  key(keyCode) {
+    return !!this.keys_[keyCode];
+  }
+
+  isReady() {
+    return this.previous_ !== null;
+  }
+
+  update(_) {
+    //Is this even called?
+    //Doesn't work because we add pointer locking anyway
+    if (this.previous_ !== null) {
+      this.current_.mouseXDelta = this.current_.mouseX - this.previous_.mouseX;
+      this.current_.mouseYDelta = this.current_.mouseY - this.previous_.mouseY;
+
+      this.previous_ = { ...this.current_ };
+    }
+  }
+}
+class FirstPersonCamera {
+  constructor(camera, objects) {
+    this.camera_ = camera;
+    this.input_ = new InputController();
+    this.rotation_ = new THREE.Quaternion();
+    this.translation_ = new THREE.Vector3(0, camh, 0);
+    this.phi_ = 0;
+    this.phiSpeed_ = 8;
+    this.theta_ = 0;
+    this.thetaSpeed_ = 5;
+    this.headBobActive_ = false;
+    this.headBobTimer_ = 0;
+    this.objects_ = objects;
+    this.forwardSpeed_ = 2;
+    this.strafeSpeed_ = 2;
+    this.bobIntensity_ = 0.1;
+  }
+
+  update(timeElapsedS) {
+  if (!(lock)) {
+    return;
+  }
+    this.updateRotation_(timeElapsedS);
+    this.updateCamera_(timeElapsedS);
+    this.updateTranslation_(timeElapsedS);
+    this.updateHeadBob_(timeElapsedS);
+    this.input_.update(timeElapsedS);
+  }
+
+  updateCamera_(_) {
+    this.camera_.quaternion.copy(this.rotation_);
+    this.camera_.position.copy(this.translation_);
+    this.camera_.position.y +=
+      Math.sin(this.headBobTimer_ * 10) * this.bobIntensity_;
+
+    const forward = new THREE.Vector3(0, 0, -1);
+    forward.applyQuaternion(this.rotation_);
+
+    const dir = forward.clone();
+
+    forward.multiplyScalar(100);
+    forward.add(this.translation_);
+
+    let closest = forward;
+    const result = new THREE.Vector3();
+    const ray = new THREE.Ray(this.translation_, dir);
+    for (let i = 0; i < this.objects_.length; ++i) {
+      if (ray.intersectBox(this.objects_[i], result)) {
+        if (result.distanceTo(ray.origin) < closest.distanceTo(ray.origin)) {
+          closest = result.clone();
+        }
+      }
+    }
+
+    this.camera_.lookAt(closest);
+  }
+
+  updateHeadBob_(timeElapsedS) {
+    if (this.headBobActive_) {
+      const wavelength = Math.PI;
+      const nextStep =
+        1 + Math.floor(((this.headBobTimer_ + 0.000001) * 10) / wavelength);
+      const nextStepTime = (nextStep * wavelength) / 10;
+      this.headBobTimer_ = Math.min(
+        this.headBobTimer_ + timeElapsedS,
+        nextStepTime,
+      );
+
+      if (this.headBobTimer_ == nextStepTime) {
+        this.headBobActive_ = false;
+      }
+    }
+  }
+
+  updateTranslation_(timeElapsedS) {
+    const forwardVelocity =
+      (this.input_.key(KEYS.w) ? 1 : 0) + (this.input_.key(KEYS.s) ? -1 : 0);
+    const strafeVelocity =
+      (this.input_.key(KEYS.a) ? 1 : 0) + (this.input_.key(KEYS.d) ? -1 : 0);
+
+    const qx = new THREE.Quaternion();
+    qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.phi_);
+
+    const forward = new THREE.Vector3(0, 0, -1);
+    forward.applyQuaternion(qx);
+    forward.multiplyScalar(forwardVelocity * timeElapsedS * this.forwardSpeed_);
+
+    const left = new THREE.Vector3(-1, 0, 0);
+    left.applyQuaternion(qx);
+    left.multiplyScalar(strafeVelocity * timeElapsedS * this.strafeSpeed_);
+
+    this.translation_.add(forward);
+    this.translation_.add(left);
+
+    if (forwardVelocity != 0 || strafeVelocity != 0) {
+      this.headBobActive_ = true;
+    }
+  }
+
+  updateRotation_(timeElapsedS) {
+    const xh = this.input_.current_.mouseXDelta / window.innerWidth;
+    const yh = this.input_.current_.mouseYDelta / window.innerHeight;
+
+    this.phi_ += -xh * this.phiSpeed_;
+    this.theta_ = clamp(
+      this.theta_ + -yh * this.thetaSpeed_,
+      -Math.PI / 3,
+      Math.PI / 3,
+    );
+
+    const qx = new THREE.Quaternion();
+    qx.setFromAxisAngle(new THREE.Vector3(0, 1, 0), this.phi_);
+    const qz = new THREE.Quaternion();
+    qz.setFromAxisAngle(new THREE.Vector3(1, 0, 0), this.theta_);
+
+    const q = new THREE.Quaternion();
+    q.multiply(qx);
+    q.multiply(qz);
+
+    this.rotation_.copy(q);
+  }
+}
+//======================================= Stolen lol ==================================================
+
+class threejsdemo {
+  constructor() {
+    this.initialize_();
+  }
+  initialize_() {
+    this.init();
+    this.post();
+    this.preload();
+    this.fpsCamera = new FirstPersonCamera(this.camera, this.objects);
+    this.previousRAF = null;
+    this.raf();
+    this.onWindowResize();
+  }
+
+  init() {
+    if (debug) {
+      posdebug.innerHTML = "x:0 y:0 z:0";
+      //gendebug.innerHTML = "Debug Mode";
+    }
+
+    this.renderer = new THREE.WebGLRenderer();
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(this.renderer.domElement);
+
+    this.renderer.sortObjects = false;
+    this.renderer.shadowMap.enabled = true;
+
+
+
+    canvas = document.querySelector("canvas");
+
+    this.stats = new Stats();
+    this.stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+
+    document.body.appendChild(this.stats.dom);
+
+    const fov = 60;
+    const aspect = window.innerWidth / window.innerHeight;
+    const near = 1.0;
+    const far = 1000.0;
+
+    this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    this.camera.position.set(0, camh, 0);
+
+    this.scene = new THREE.Scene();
+
+    this.uiCamera = new THREE.OrthographicCamera(
+      -1,
+      1,
+      1 * aspect,
+      -1 * aspect,
+      1,
+      1000,
+    );
+    this.uiScene = new THREE.Scene();
+  }
+  preload() {
+    this.geometry = new THREE.BoxGeometry(1, 1, 1);
+    const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    //const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    material.metalness = 0.5;
+    material.roughness = 0.5;
+    this.cube = new THREE.Mesh(this.geometry, material);
+    this.cube.position.y = 1;
+    this.cube.position.z = -10;
+    this.cube.castShadow = true;
+    this.cube.receiveShadow = true;
+
+    this.planes = [];
+    this.lines = [];
+    this.pointsmap = [];
+    //Area 1
+    {
+
+      let geometry = new THREE.PlaneGeometry( 12, 30 );
+      let i = 0
+      let material;
+      if (lighting) {
+        material = new THREE.MeshStandardMaterial( {
+          color: 0xffffff, 
+          //shininess: 30,
+          side: THREE.DoubleSide,
+          //metalness: 0.5,
+          //roughness: 0.5,
+        } );
+      } else {
+        material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} ); //debug
+      }
+
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].rotation.x = Math.PI/2;
+      this.planes[i].position.z = -10;
+      this.planes[i].receiveShadow = true;
+      i++;
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].rotation.x = Math.PI/2;
+      this.planes[i].position.z = -10;
+      this.planes[i].position.y = 9;
+      this.planes[i].receiveShadow = true;
+      i++;
+      geometry = new THREE.PlaneGeometry( 30, 9 );
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].rotation.y = Math.PI/2;
+      this.planes[i].position.y = 4.5;
+      this.planes[i].position.z = -10;
+      this.planes[i].position.x = -6;
+      i++;
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].rotation.y = Math.PI/2;
+      this.planes[i].position.y = 4.5;
+      this.planes[i].position.z = -10;
+      this.planes[i].position.x = 6;
+      i++;
+      geometry = new THREE.PlaneGeometry( 12, 9 );
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].position.z = -25
+      this.planes[i].position.y = 4.5
+      i++;
+      this.planes.push(new THREE.Mesh( geometry, material ));
+      this.planes[i].position.z = 5
+      this.planes[i].position.y = 4.5
+
+      material = new THREE.LineBasicMaterial({ 
+        color: 0x000000,
+        linewidth: 100,
+      });      
+      this.pointsmap = [];
+      for (let i = 0; i < this.planes.length; ++i) {
+          this.pointsmap.push(getPlaneVertices(this.planes[i]));
+      }
+      for (let i = 0; i < this.pointsmap.length; ++i) {
+        geometry = new THREE.BufferGeometry().setFromPoints( this.pointsmap[i] );
+        this.lines.push(new THREE.Line( geometry, material ));
+
+      }
+
+      //flashlight
+      if (lighting) {
+        this.flashlight = new THREE.SpotLight(
+          0xffffff, //color
+          0, //intensity
+          0, //distance
+          Math.PI/6,  //angle
+          1, //penumbra
+          1, //decay
+        );
+        this.scene.add(this.flashlight);
+        this.flashlight.castShadow = true;
+        this.scene.add( this.flashlight.target );
+        //this.flashlight.position.set(this.camera.position.x,this.camera.position.y,this.camera.position.z);
+        this.flashlight.position.set(0, 2, 0);
+        //offset = new THREE.Vector3(0, 5, 0);
+        this.flashlight.target.position.set(0, 3, -10);
+        //this.flashlight.penumbra = 1;
+      }
+
+      // light
+
+      this.light = new THREE.SpotLight(
+        0xffffff, //color
+        150, //intensity
+        0, //distance
+        Math.PI/5,  //angle
+      );
+      this.light.position.set(0, 9, -10);
+      //this.scene.add(this.light);
+<<<<<<< HEAD
+      this.scene.add(this.light.target);
+=======
+      this.scene.add( this.light.target );
+>>>>>>> 38f43a31684b6f81d18c0ebde662637ffe4630a9  
+      this.light.penumbra = 1;
+      //this.light.power = 100;
+      this.light.castShadow = true;
+      this.light.target.position.set(0, 0, -10);
+      /*
+      this.light2 = new THREE.SpotLight(
+        0xffffff, //color
+        15, //intensity
+        0, //distance
+        499*Math.PI/1000,  //angle
+      );
+      this.light2.position.set(0, 0, -10);
+      this.light2.penumbra = 0;
+      //this.scene.add(this.light2);
+      this.scene.add( this.light2.target );
+      this.light2.target.position.set(0, 10, -10);
+      */
+      //We can't afford light bouncing, so trick the user
+      this.ambientLight = new THREE.AmbientLight()
+      this.ambientLight.color = new THREE.Color(0xffffff)
+      this.ambientLight.intensity = 0.1;
+      this.scene.add(this.ambientLight)
+      /*
+      this.light3 = new THREE.PointLight( 0xffffff, 30, 100 );
+      this.light3.position.set( 0, 0, -10 );
+      this.scene.add( this.light3 );
+      */
+      //light helper
+      /*
+      this.helper = new THREE.SpotLightHelper( this.light, 0xffffff);
+      this.scene.add( this.helper );
+
+      this.helper2 = new THREE.SpotLightHelper( this.light2, 0xffff00);
+      this.scene.add( this.helper2 );
+
+      this.helper3 = new THREE.PointLightHelper( this.light3, 5);
+      this.scene.add( this.helper3 );
+      */
+      //this.flashlightHelper = new THREE.SpotLightHelper( this.flashlight, 0xffffff);
+      //this.scene.add( this.flashlightHelper );
+
+    }
+
+    // Create a circle geometry and a material
+    //this.geometry = new THREE.CircleGeometry(0.1, 32);
+    //this.material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+
+    // Create a mesh using the geometry and material
+    //this.circle = new THREE.Mesh(this.geometry, this.material);
+
+    // Add the circle to your scene
+    //this.scene.add(this.circle);
+
+    const singlemeshes = [this.cube];
+    const meshes = singlemeshes.concat(this.planes).concat(this.lines);
+
+    this.objects = [];
+
+    for (let i = 0; i < meshes.length; ++i) {
+      const b = new THREE.Box3();
+      b.setFromObject(meshes[i]);
+      this.objects.push(b);
+      this.scene.add(meshes[i]);
+    }
+    this.outlinePass.selectedObjects = meshes;
+  }
+
+  post() {
+    this.composer = new EffectComposer(this.renderer);
+
+    this.renderPass = new RenderPass(this.scene, this.camera);
+    this.composer.addPass(this.renderPass);
+
+
+    this.outlinePass = new OutlinePass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      this.scene,
+      this.camera,
+    );
+    this.composer.addPass(this.outlinePass);
+
+    this.outlinePass.visibleEdgeColor.set("#ffffff");
+    this.outlinePass.hiddenEdgeColor.set("#ffffff");
+    this.outlinePass.edgeThickness = Number(1);
+    this.outlinePass.edgeGlow = Number(0.0);
+    this.outlinePass.edgeStrength = Number(10.0);
+    /*
+    this.outputPass = new OutputPass();
+    this.composer.addPass( this.outputPass );
+
+    this.effectFXAA = new ShaderPass( FXAAShader );
+    this.effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+    this.composer.addPass( this.effectFXAA );
+    */
+  }
+  onWindowResize() {
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
+
+    this.uiCamera.left = -this.camera.aspect;
+    this.uiCamera.right = this.camera.aspect;
+    this.uiCamera.updateProjectionMatrix();
+
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    //this.composer.setSize(window.innerWidth, window.innerHeight);
+
+    //this.effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+  }
+  updateFlashlight() {
+
+    if (lighting) {
+      if (this.fpsCamera.input_.key(KEYS.space)) {
+        this.flashlight.intensity = 10;
+        this.flashlight.position.copy(this.camera.position);
+        this.flashlight.target.position.copy(this.camera.position);
+        let direction = new THREE.Vector3();
+        this.camera.getWorldDirection(direction);
+        this.flashlight.target.position.add(direction).add(new THREE.Vector3(0,0,0));
+        //this.flashlight.target.position.applyQuaternion(this.camera.quaternion);
+        //this.flashlight.target.position.add(new THREE.Vector3(0,0,-3))
+        //genUpdate(JSON.stringify(direction));
+        //this.circle.position.copy(this.camera.position);
+        //this.circle.position.add(direction/*.multiplyScalar(5)*/);
+        //this.circle.lookAt(this.camera.position);
+        //this.flashlightHelper.update();
+      } else {
+        this.flashlight.intensity = 0;
+      }
+    }
+  }
+
+  posupdate(x = 0, y = 0, z = 0) {
+    posdebug.innerHTML =
+      "x:" + x.toString() + " y:" + y.toString() + " z:" + z.toString();
+  }
+  posauto() {
+    this.posupdate(
+      this.camera.position.x,
+      this.camera.position.y,
+      this.camera.position.z,
+    );
+  }
+  stepold() {
+    const delta = this.clock.getDelta();
+    this.controls.update(delta);
+  }
+  step(timeElapsed) {
+    const timeElapsedS = timeElapsed * 0.001;
+
+    this.fpsCamera.update(timeElapsedS);
+    this.updateFlashlight();
+  }
+
+  raf() {
+    requestAnimationFrame((t) => {
+      if (this.previousRAF === null) {
+        this.previousRAF = t;
+      }
+
+      this.step(t - this.previousRAF);
+      //this.stepold(); //Deprecated for being too static in implementation
+      this.stats.update();
+      this.cube.rotation.x += 0.01;
+      this.cube.rotation.y += 0.01;
+      if (debug) {
+        this.posauto();
+      }
+      //this.renderer.autoClear = true;
+      //this.renderer.render(this.scene, this.camera); //Superceded by post processing tool
+      this.composer.render();
+      //this.renderer.autoClear = false;
+      //this.renderer.render(this.uiScene, this.uiCamera); //Ignore 2d camera tool for now
+      this.previousRAF = t;
+      this.raf();
+    });
+  }
+}
+
+let _APP = null;
+// Check for WebGL Compat
+if (WebGL.isWebGLAvailable()) {
+  // Initiate function or other initializations here
+  window.addEventListener("DOMContentLoaded", () => {
+    _APP = new threejsdemo();
+  });
+} else {
+  const warning = WebGL.getWebGLErrorMessage();
+  document.getElementById("container").appendChild(warning);
+}
