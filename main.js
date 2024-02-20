@@ -441,7 +441,7 @@ class threejsdemo {
         material = new THREE.MeshStandardMaterial( {
           color: 0xffffff, 
           //shininess: 30,
-          side: THREE.DoubleSide,
+          //side: THREE.DoubleSide,
           //metalness: 0.5,
           //roughness: 0.5,
         } );
