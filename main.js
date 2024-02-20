@@ -528,7 +528,7 @@ class threejsdemo {
         Math.PI / 5, //angle
       );
       this.light.position.set(0, 9, -10);
-      this.scene.add(this.light);
+      //this.scene.add(this.light);
       this.scene.add(this.light.target);
       this.light.penumbra = 1;
       //this.light.power = 100;
@@ -560,14 +560,14 @@ class threejsdemo {
       //light helper
       /*
       this.helper = new THREE.SpotLightHelper( this.light, 0xffffff);
-			this.scene.add( this.helper );
-      
+      this.scene.add( this.helper );
+
       this.helper2 = new THREE.SpotLightHelper( this.light2, 0xffff00);
-			this.scene.add( this.helper2 );
-      
+      this.scene.add( this.helper2 );
+
       this.helper3 = new THREE.PointLightHelper( this.light3, 5);
-			this.scene.add( this.helper3 );
-			*/
+      this.scene.add( this.helper3 );
+      */
       //this.flashlightHelper = new THREE.SpotLightHelper( this.flashlight, 0xffffff);
       //this.scene.add( this.flashlightHelper );
     }
@@ -615,13 +615,13 @@ class threejsdemo {
     this.outlinePass.edgeGlow = Number(0.0);
     this.outlinePass.edgeStrength = Number(10.0);
     /*
-		this.outputPass = new OutputPass();
-		this.composer.addPass( this.outputPass );
+    this.outputPass = new OutputPass();
+    this.composer.addPass( this.outputPass );
 
-		this.effectFXAA = new ShaderPass( FXAAShader );
-		this.effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
-		this.composer.addPass( this.effectFXAA );
-		*/
+    this.effectFXAA = new ShaderPass( FXAAShader );
+    this.effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+    this.composer.addPass( this.effectFXAA );
+    */
   }
   onWindowResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight;
