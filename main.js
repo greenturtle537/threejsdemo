@@ -15,6 +15,15 @@ let lighting = true;
 let posdebug = document.getElementById("posdebug");
 let gendebug = document.getElementById("gendebug");
 
+/* A few notes about sizing, please assume:
+/  1 unit = 1 foot
+/  Average hallways in the US are 9 feet tall
+/  School hallways tend to 6-18 feet wide
+/  Average person height is 5'6"
+*/
+let camh = 5.5;
+
+
 let canvas;
 
 document.addEventListener("pointerlockchange", lockChangeAlert, false);
@@ -232,7 +241,7 @@ class FirstPersonCamera {
     this.camera_ = camera;
     this.input_ = new InputController();
     this.rotation_ = new THREE.Quaternion();
-    this.translation_ = new THREE.Vector3(0, 2, 0);
+    this.translation_ = new THREE.Vector3(0, camh, 0);
     this.phi_ = 0;
     this.phiSpeed_ = 8;
     this.theta_ = 0;
@@ -376,6 +385,8 @@ class threejsdemo {
     document.body.appendChild(this.renderer.domElement);
 
     this.renderer.sortObjects = false;
+    this.renderer.shadowMap.enabled = true;
+
 
 
     canvas = document.querySelector("canvas");
@@ -391,7 +402,7 @@ class threejsdemo {
     const far = 1000.0;
 
     this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    this.camera.position.set(0, 2, 0);
+    this.camera.position.set(0, camh, 0);
 
     this.scene = new THREE.Scene();
 
@@ -414,6 +425,8 @@ class threejsdemo {
     this.cube = new THREE.Mesh(this.geometry, material);
     this.cube.position.y = 1;
     this.cube.position.z = -10;
+    this.cube.castShadow = true;
+    this.cube.receiveShadow = true;
 
 		this.planes = [];
 		this.lines = [];
@@ -421,13 +434,13 @@ class threejsdemo {
 		//Area 1
 		{
 			
-			let geometry = new THREE.PlaneGeometry( 10, 30 );
+			let geometry = new THREE.PlaneGeometry( 12, 30 );
 			let i = 0
       let material;
       if (lighting) {
         material = new THREE.MeshStandardMaterial( {
           color: 0xffffff, 
-          shininess: 30,
+          //shininess: 30,
           side: THREE.DoubleSide,
           //metalness: 0.5,
           //roughness: 0.5,
@@ -439,33 +452,35 @@ class threejsdemo {
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].rotation.x = Math.PI/2;
 			this.planes[i].position.z = -10;
+      this.planes[i].receiveShadow = true;
 			i++;
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].rotation.x = Math.PI/2;
 			this.planes[i].position.z = -10;
-			this.planes[i].position.y = 10;
+			this.planes[i].position.y = 9;
+      this.planes[i].receiveShadow = true;
 			i++;
-			geometry = new THREE.PlaneGeometry( 30, 10 );
+			geometry = new THREE.PlaneGeometry( 30, 9 );
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].rotation.y = Math.PI/2;
-			this.planes[i].position.y = 5;
+			this.planes[i].position.y = 4.5;
 			this.planes[i].position.z = -10;
-			this.planes[i].position.x = -5;
+			this.planes[i].position.x = -6;
 			i++;
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].rotation.y = Math.PI/2;
-			this.planes[i].position.y = 5;
+			this.planes[i].position.y = 4.5;
 			this.planes[i].position.z = -10;
-			this.planes[i].position.x = 5;
+			this.planes[i].position.x = 6;
 			i++;
-			geometry = new THREE.PlaneGeometry( 10, 10 );
+			geometry = new THREE.PlaneGeometry( 12, 9 );
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].position.z = -25
-			this.planes[i].position.y = 5
+			this.planes[i].position.y = 4.5
 			i++;
 			this.planes.push(new THREE.Mesh( geometry, material ));
 			this.planes[i].position.z = 5
-			this.planes[i].position.y = 5
+			this.planes[i].position.y = 4.5
 			
 			material = new THREE.LineBasicMaterial({ 
 				color: 0x000000,
@@ -487,11 +502,12 @@ class threejsdemo {
           0xffffff, //color
           0, //intensity
           0, //distance
-          Math.PI/12,  //angle
+          Math.PI/6,  //angle
           1, //penumbra
-          2, //decay
+          1, //decay
         );
         this.scene.add(this.flashlight);
+        this.flashlight.castShadow = true;
         this.scene.add( this.flashlight.target );
         //this.flashlight.position.set(this.camera.position.x,this.camera.position.y,this.camera.position.z);
         this.flashlight.position.set(0, 2, 0);
@@ -506,10 +522,10 @@ class threejsdemo {
         0xffffff, //color
         150, //intensity
         0, //distance
-        Math.PI/8,  //angle
+        Math.PI/5,  //angle
       );
       this.light.position.set(0, 9, -10);
-      this.scene.add(this.light);
+      //this.scene.add(this.light);
       this.scene.add( this.light.target );
       this.light.penumbra = 1;
       //this.light.power = 100;
@@ -623,7 +639,7 @@ class threejsdemo {
     
     if (lighting) {
       if (this.fpsCamera.input_.key(KEYS.space)) {
-        this.flashlight.intensity = 50;
+        this.flashlight.intensity = 10;
         this.flashlight.position.copy(this.camera.position);
         this.flashlight.target.position.copy(this.camera.position);
         let direction = new THREE.Vector3();
