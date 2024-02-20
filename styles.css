@@ -14,3 +14,7 @@
 	z-index: 100;
 	display:block;
 }
+mark {
+  background-color: white;
+  color: black;
+}
