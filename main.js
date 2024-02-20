@@ -9,7 +9,7 @@ import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
 //import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 import { LightProbeGenerator } from 'three/addons/lights/LightProbeGenerator.js';
 
-let debug = true;
+let debug = false;
 let lighting = true;
 
 let posdebug = document.getElementById("posdebug");
@@ -525,7 +525,7 @@ class threejsdemo {
         Math.PI/5,  //angle
       );
       this.light.position.set(0, 9, -10);
-      //this.scene.add(this.light);
+      this.scene.add(this.light);
       this.scene.add( this.light.target );
       this.light.penumbra = 1;
       //this.light.power = 100;
