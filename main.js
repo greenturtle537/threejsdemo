@@ -525,7 +525,7 @@ class threejsdemo {
         Math.PI/5,  //angle
       );
       this.light.position.set(0, 9, -10);
-      this.scene.add(this.light);
+      //this.scene.add(this.light);
       this.scene.add( this.light.target );
       this.light.penumbra = 1;
       //this.light.power = 100;
